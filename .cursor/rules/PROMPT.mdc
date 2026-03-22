@@ -1,0 +1,535 @@
+---
+alwaysApply: false
+description: Copy-paste phase prompts for scaffolding; does not auto-apply — open when pasting into chat.
+---
+
+# Cursor Prompt Templates
+## Agentic Performance Testing Framework — IndiaMart
+### Phase-by-Phase Prompts + How to Use Them
+
+---
+
+> **How to use this file**
+> Each prompt is designed to be pasted directly into Cursor's chat (`Cmd+L` or `Cmd+I`).
+> Open the relevant file first, then run the prompt. Cursor will use `.cursor/rules`
+> automatically — these prompts build on top of those rules, not replace them.
+> Prompts marked **[CHAT]** go in the sidebar chat. Prompts marked **[INLINE]** go
+> with `Cmd+I` directly in the file you want to generate.
+
+---
+
+## PHASE 1 — Web Vitals Baseline Agent
+
+---
+
+### P1-01 · Project scaffold + config [CHAT]
+
+```
+Scaffold the full project structure for our agentic performance testing framework.
+Follow the file structure in .cursor/rules exactly.
+
+Create these files with correct TypeScript boilerplate:
+- package.json with dependencies: playwright, lighthouse, chrome-launcher, pg, zod,
+  @anthropic-ai/sdk, dotenv, winston, uuid, pixelmatch, pngjs, ssim.js (and dev: typescript,
+  @types/node, @types/pg, vitest). Use `pg` only — TimescaleDB is a server extension in SQL, not an npm package.
+- tsconfig.json with strict mode
+- .env.example with all required env vars: DATABASE_URL, SLACK_WEBHOOK_URL,
+  JIRA_API_TOKEN, JIRA_PROJECT_KEY, ANTHROPIC_API_KEY, TARGET_ENV
+- config/pages.ts — export a PAGES array with these IndiaMart pages:
+    { slug: 'homepage', url: 'https://www.indiamart.com', name: 'Homepage' }
+    { slug: 'search', url: 'https://www.indiamart.com/search.mp?ss=steel+pipes', name: 'Search results' }
+    { slug: 'product-listing', url: 'https://www.indiamart.com/proddetail/', name: 'Product listing' }
+    { slug: 'supplier-detail', url: 'https://www.indiamart.com/companyname/', name: 'Supplier detail' }
+    { slug: 'category', url: 'https://www.indiamart.com/industrial-machinery/', name: 'Category browse' }
+- config/thresholds.ts — export THRESHOLDS object with the regression thresholds
+  from .cursor/rules
+- config/network-profiles.ts — export NETWORK_PROFILES exactly as defined in .cursor/rules
+
+Use the Result<T> error pattern from .cursor/rules everywhere.
+```
+
+---
+
+### P1-02 · Database schema + TimescaleDB setup [CHAT]
+
+```
+Create db/schema.sql with the full database setup for our metrics storage.
+
+Requirements:
+- Enable TimescaleDB extension
+- Create vitals_measurements table as defined in .cursor/rules
+- Create a runs table to track each test run:
+    run_id UUID PRIMARY KEY, triggered_at TIMESTAMPTZ, trigger_type TEXT
+    (deploy|scheduled|manual), deploy_sha TEXT, status TEXT, completed_at TIMESTAMPTZ
+- Create a script_inventory table for Phase 3 (3P script audit):
+    id BIGSERIAL, measured_at TIMESTAMPTZ, page_slug TEXT, script_url TEXT,
+    script_size_bytes INT, blocking_time_ms FLOAT, is_third_party BOOLEAN,
+    domain TEXT
+- Convert vitals_measurements and script_inventory to hypertables
+- Create the indexes from .cursor/rules
+- Add a TimescaleDB retention policy: drop data older than 90 days from vitals_measurements
+- Create a continuous aggregate: daily_vitals_summary with p50/p75/p95 for each metric per page
+
+Also create db/queries.ts with typed query functions for:
+- insertMeasurement(data: VitalsMeasurement): Promise<Result<void>>
+- getBaseline(pageSlug: string, days: number): Promise<Result<BaselineStats>>
+- getRecentRuns(limit: number): Promise<Result<Run[]>>
+- getDelta(pageSlug: string, currentRunId: string): Promise<Result<MetricDelta>>
+```
+
+---
+
+### P1-03 · Core web vitals agent [CHAT]
+
+```
+Create agents/web-vitals-agent.ts — the Phase 1 core agent.
+
+This agent receives a Page config and returns vitals measurements.
+
+Requirements:
+- Launch Playwright with the standard config from .cursor/rules
+- For each page, run Lighthouse programmatically (not CLI) 3 times
+- Use lighthouse/core package, desktop config, settings from .cursor/rules
+- Extract these metrics from each run: LCP, CLS, INP, FCP, TTFB, TBT, Speed Index,
+  Lighthouse performance score
+- Return the MEDIAN of 3 runs for each metric (not average — median is more stable)
+- Also capture: which DOM element is the LCP element (Lighthouse exposes this)
+- Store the raw Lighthouse JSON to disk at ./raw-reports/{run-id}/{page-slug}-{n}.json
+- Implement the 5-minute hard timeout from .cursor/rules
+- Use the Result<T> pattern — never throw
+- Log structured output: { agent: 'web-vitals', page, status, duration_ms }
+
+The function signature should be:
+  runWebVitalsAgent(page: PageConfig, runId: string): Promise<Result<VitalsMeasurement>>
+```
+
+---
+
+### P1-04 · Regression detector [INLINE]
+
+```
+Open db/queries.ts and add a detectRegression function.
+
+The function:
+  detectRegression(current: VitalsMeasurement, baseline: BaselineStats): RegressionReport
+
+Should:
+- Compare each metric in current against the baseline median from last 7 days
+- Apply the thresholds from config/thresholds.ts
+- Return a RegressionReport with:
+    { hasRegression: boolean, regressions: MetricRegression[], severity: Severity }
+- Each MetricRegression should include:
+    { metric, currentValue, baselineValue, deltaPct, deltaAbsolute, severity }
+- Severity calculation: use the CRITICAL/HIGH/MEDIUM/LOW rules from .cursor/rules
+- If the page has no baseline yet (first run), return hasRegression: false and
+  log a warning — never alert on first run
+```
+
+---
+
+### P1-05 · Slack alert reporter [CHAT]
+
+```
+Create reporters/slack-reporter.ts.
+
+Requirements:
+- Use Slack Block Kit format (not plain text) for rich formatting
+- The main function: sendRegressionAlert(report: RegressionReport, page: PageConfig, runId: string)
+- Message format:
+    Header: severity emoji + page name + "performance regression detected"
+    Section: table of regressed metrics — metric name, before, after, % change
+    Section: LCP element that is the largest paint (from web vitals agent)
+    Section: links — Grafana dashboard link, raw report link
+    Footer: run ID, timestamp, triggered by (deploy SHA or scheduled)
+- Severity emoji mapping: CRITICAL=🔴, HIGH=🟠, MEDIUM=🟡, LOW=⚪
+- Only send to #perf-alerts channel for HIGH/CRITICAL
+- For MEDIUM: send to #perf-log only
+- For LOW: do not send — log to file only
+- Use SLACK_WEBHOOK_URL from env
+- Implement retry with exponential backoff (max 3 attempts)
+- Use Result<T> pattern
+```
+
+---
+
+### P1-06 · Orchestrator v1 (Phase 1 only) [CHAT]
+
+```
+Create agents/orchestrator.ts — the Phase 1 version that runs web vitals only.
+
+The orchestrator:
+1. Accepts a trigger: { type: 'deploy'|'scheduled'|'manual', deploySha?: string }
+2. Creates a run record in the database with a UUID run ID
+3. Reads all pages from config/pages.ts
+4. Runs the web vitals agent for ALL pages in PARALLEL using Promise.allSettled
+   (never Promise.all — one failure must not kill the others)
+5. For each result:
+   - On success: run detectRegression, store measurement, send alert if needed
+   - On failure: mark page as FAILED in run record, log error, continue
+6. Updates the run record with final status and completion time
+7. Prints a summary to stdout: X pages passed, Y pages failed, Z regressions found
+
+Each page run has the 5-minute timeout from .cursor/rules.
+The orchestrator itself has a 15-minute global timeout.
+
+Also create .github/workflows/perf-test.yml that:
+- Triggers on: push to main, and daily at 02:00 IST (UTC+5:30 = 20:30 UTC)
+- Sets all env vars from GitHub Secrets
+- Runs: npm run test:perf
+- Posts a comment on the PR with the summary if triggered by push
+```
+
+---
+
+## PHASE 2 — Network Simulation + Visual QA
+
+---
+
+### P2-01 · Network simulation agent [CHAT]
+
+```
+Create agents/network-sim-agent.ts — Phase 2 network simulation.
+
+This agent wraps the web vitals agent but injects CDP network throttling.
+
+Requirements:
+- For each page, run web vitals measurement under ALL 4 network profiles from .cursor/rules
+- Use Playwright's CDP session to apply network conditions:
+    const client = await context.newCDPSession(page)
+    await client.send('Network.emulateNetworkConditions', profile)
+- Run the 4 profiles IN PARALLEL (4 Playwright contexts simultaneously)
+- Always reset network conditions after each run, even on error — use try/finally
+- Return a NetworkSimResult:
+    { pageSlug, results: Record<NetworkProfile, VitalsMeasurement | Error> }
+- Calculate degradation ratios: e.g. LCP on SLOW_3G / LCP on 4G
+- Flag as concerning if LCP degrades > 3x from 4G to SLOW_3G
+- The 8-minute timeout applies to the full 4-profile run for one page
+
+Agent function signature:
+  runNetworkSimAgent(page: PageConfig, runId: string): Promise<Result<NetworkSimResult>>
+```
+
+---
+
+### P2-02 · Screenshot baseline capture [CHAT]
+
+```
+Create a one-time script scripts/capture-baselines.ts for capturing visual baselines.
+
+This runs once to establish the initial screenshot baselines.
+
+Requirements:
+- For each page in config/pages.ts, capture a full-page screenshot
+- Capture at both viewports: desktop (1440x900) and mobile (390x844)
+- Wait for: networkidle + all images loaded (wait for img elements to have naturalWidth > 0)
+- Also capture a 3-second scroll video to establish scroll baseline
+- Save to: ./baselines/{page-slug}/{viewport}/baseline_{timestamp}.png
+- Save scroll video to: ./baselines/{page-slug}/{viewport}/scroll_baseline.mp4
+- Write a baselines/manifest.json tracking:
+    { pageSlug, viewport, capturedAt, filePath, checksum }
+- Print instructions at the end: "Baselines captured. Review screenshots in ./baselines/
+  before running tests. Run npm run test:visual to compare against these."
+- Never overwrite existing baselines silently — prompt the user to confirm with --force flag
+```
+
+---
+
+### P2-03 · SSIM flicker and jank detector [CHAT]
+
+```
+Create agents/visual-qa-agent.ts — Phase 2 visual quality agent.
+
+This agent detects visual regressions: flicker, jank, and layout shift.
+
+Requirements:
+
+PART 1 — FLICKER DETECTION
+- Record a 5-second video of the page loading using Playwright's recordVideo
+- Extract frames at 10fps using ffmpeg (spawn as child process)
+- Calculate SSIM between consecutive frames using the ssim package
+- FLICKER = SSIM drops more than 0.15 between any two consecutive frames
+- Return: { hasFlicker: boolean, flickerFrames: number[], worstDrop: number }
+
+PART 2 — SCROLL JANK DETECTION
+- Inject a JS script that measures frame timing during a programmatic scroll:
+    Use requestAnimationFrame to count actual vs expected frames over 3 seconds
+- Jank = more than 5% of frames dropped (frame took > 32ms = dropped on 30fps baseline)
+- Return: { jankScore: number, droppedFramePct: number, hasJank: boolean }
+
+PART 3 — LAYOUT SHIFT EVIDENCE
+- Capture screenshots at 500ms, 1s, 2s, 3s after navigation
+- Run pixelmatch between each consecutive pair
+- Return: diff images saved to ./diffs/{run-id}/, diffPixelCount per pair
+- Correlate with CLS score from web vitals agent (they should agree directionally)
+
+Agent function signature:
+  runVisualQAAgent(page: PageConfig, runId: string): Promise<Result<VisualQAResult>>
+
+Flicker and jank findings should be included in the Slack alert if they exceed thresholds.
+```
+
+---
+
+### P2-04 · Extend orchestrator for Phase 2 [INLINE]
+
+```
+Update agents/orchestrator.ts to run Phase 2 agents alongside Phase 1.
+
+Changes needed:
+- Import and run networkSimAgent and visualQAAgent in parallel with webVitalsAgent
+- Use Promise.allSettled for all three agents per page (still one Promise.allSettled call)
+- The run summary should now include network profile matrix:
+    Page | 4G LCP | Slow-3G LCP | EDGE LCP | Flicker | Jank
+- Add a new config flag: RUN_PHASE to control which agents run:
+    RUN_PHASE=1 → vitals only
+    RUN_PHASE=2 → vitals + network sim + visual QA
+    RUN_PHASE=3 → all agents
+- Keep Phase 1 behaviour unchanged when RUN_PHASE=1
+```
+
+---
+
+## PHASE 3 — LLM Analysis + 3P Script Audit
+
+---
+
+### P3-01 · Third-party script audit agent [CHAT]
+
+```
+Create agents/script-audit-agent.ts — the 3P script inventory agent.
+
+This agent uses the HAR (HTTP Archive) from a Playwright run to identify all third-party
+scripts and their performance cost.
+
+Requirements:
+- Enable HAR recording in Playwright context: recordHar: { path: './har/{run-id}/{page}.har' }
+- After page load, parse the HAR file
+- For each resource:
+    - Identify if third-party: domain != indiamart.com and != www.indiamart.com
+    - Extract: url, domain, size (compressed + uncompressed), timing (blocked ms, dns ms, connect ms, send ms, wait ms, receive ms)
+    - Classify script type: analytics | advertising | chat | cdn | social | unknown
+    - Calculate render-blocking score: was it in <head> without async/defer?
+- Return a ScriptInventory:
+    { totalThirdPartySize_kb, totalBlockingTime_ms, scripts: Script[] }
+    where each Script has: { url, domain, type, size_kb, blockingTime_ms, isRenderBlocking }
+- Sort by blockingTime_ms descending — worst offenders first
+- Flag as HIGH_RISK if: isRenderBlocking AND size_kb > 30
+- Store inventory in script_inventory table (db/schema.sql)
+- Include top 5 offenders in the Slack report
+```
+
+---
+
+### P3-02 · LLM analysis agent [CHAT]
+
+```
+Create agents/analysis-agent.ts — the Claude-powered root cause analysis agent.
+
+This is Phase 3's core intelligence layer.
+
+Requirements:
+- Import Anthropic SDK: import Anthropic from '@anthropic-ai/sdk'
+- Use model: 'claude-sonnet-4-20250514' (as per .cursor/rules)
+- The agent receives:
+    - MetricDelta: before/after values for all metrics (from getDelta in db/queries.ts)
+    - deploySha: string (to fetch git diff)
+    - ScriptInventory: from script audit agent
+    - NetworkSimResult: the 4-profile matrix
+
+STEP 1 — Fetch git diff
+- Run: git diff {previousSha}..{currentSha} --stat --diff-filter=AM -- '*.js' '*.ts' '*.json'
+- Truncate to 4000 chars if longer (send summary not full diff)
+
+STEP 2 — Build the analysis prompt
+System prompt:
+  "You are a senior web performance engineer. Analyze the following performance
+   regression and provide a root cause analysis. Respond ONLY with valid JSON
+   matching the schema exactly. No prose outside the JSON object."
+
+User message (JSON structure):
+  {
+    "metric_delta": { ...before/after for each metric with % change },
+    "git_diff_summary": "...",
+    "third_party_changes": [ high risk scripts from ScriptInventory ],
+    "network_degradation": { "lcp_4g_to_slow3g_ratio": X, "worst_profile": "..." }
+  }
+
+STEP 3 — Parse and validate response
+- Validate with zod against RegressionAnalysis schema:
+    { severity, summary, root_cause, affected_metrics, recommendation, confidence }
+- On parse failure: retry once with the error message appended to the prompt
+- On second failure: return a fallback Result with raw text
+
+STEP 4 — Log everything
+- Log: { inputTokens, outputTokens, latencyMs, model, runId, pageSlug }
+
+Function signature:
+  runAnalysisAgent(delta: MetricDelta, context: AnalysisContext): Promise<Result<RegressionAnalysis>>
+```
+
+---
+
+### P3-03 · Jira reporter [CHAT]
+
+```
+Create reporters/jira-reporter.ts — auto-creates Jira tickets for regressions.
+
+Requirements:
+- Only create tickets for HIGH or CRITICAL severity regressions
+- Check for duplicate: search Jira for open tickets with label 'perf-regression'
+  AND component = page slug — if found, add a comment instead of creating new ticket
+- Ticket format:
+    Summary: "[PERF] {Page} — {worst metric} regression ({delta}%) — {severity}"
+    Description (Jira markdown):
+      h2. Summary
+      {analysis.summary}
+
+      h2. Metrics affected
+      Table: metric | before | after | change
+
+      h2. Root cause
+      {analysis.root_cause}
+
+      h2. Recommendation
+      {analysis.recommendation}
+
+      h2. Evidence
+      - Run ID: {runId}
+      - Deploy SHA: {deploySha}
+      - Network profile worst case: {networkSimSummary}
+      - Top offending script: {worstScript.url} ({worstScript.blockingTime_ms}ms blocking)
+
+    Labels: ['perf-regression', 'automated', page.slug, network_profile]
+    Priority: CRITICAL → P1, HIGH → P2
+    Component: 'Performance'
+
+- Use JIRA_API_TOKEN and JIRA_PROJECT_KEY from env
+- Use the Jira REST API v3 (not SDK)
+- Return the created/updated ticket key (e.g. PROJ-1234)
+- Include the Jira ticket link in the Slack alert
+```
+
+---
+
+### P3-04 · Final orchestrator — all phases [INLINE]
+
+```
+Update agents/orchestrator.ts to the final Phase 3 version.
+
+Add to the existing orchestrator:
+- Run scriptAuditAgent and analysisAgent after the Phase 1+2 agents complete
+- The analysis agent needs the MetricDelta (from DB) + the script inventory + network results
+- The analysis agent runs ONCE per page (not per network profile)
+- Pass the RegressionAnalysis result to both the Slack reporter and Jira reporter
+- Jira reporter only fires if analysis.severity is HIGH or CRITICAL
+- Add a new CLI flag: --dry-run that runs all agents but skips Slack and Jira
+- Add a --page flag to run a single page: npm run test:perf -- --page homepage
+- Update the run summary output:
+    Page | Vitals | Worst Network | Flicker | Jank | 3P Scripts | LLM Severity | Ticket
+- Update GitHub Actions workflow to pass RUN_PHASE=3 env variable
+```
+
+---
+
+## UTILITY PROMPTS — Use at any phase
+
+---
+
+### U-01 · Generate unit tests for any agent [INLINE]
+
+```
+Generate a comprehensive unit test file for this agent using Vitest.
+
+Test requirements:
+- Mock all external dependencies: Playwright browser, Lighthouse, database, Anthropic SDK
+- Test the happy path: valid input → expected Result<T> shape
+- Test error handling: what happens when Playwright fails to load the page
+- Test the retry logic if this agent has retries
+- Test the timeout: mock a slow response and verify the timeout fires
+- Test data validation: malformed metric data should return Result error not throw
+- Use realistic fixture data based on IndiaMart pages
+- Each test should be independent — no shared state between tests
+- Aim for > 80% branch coverage on this file
+```
+
+---
+
+### U-02 · Add structured logging to any file [INLINE]
+
+```
+Refactor all console.log statements in this file to use structured logging.
+
+Requirements:
+- Import the logger from utils/logger.ts (create it if it doesn't exist)
+- Logger should use winston with JSON transport in production, pretty-print in development
+- Every log call must include: { agent, pageSlug, runId } as context
+- Map log levels: debug → verbose operational info, info → key milestones,
+  warn → non-fatal issues, error → failures with full error object
+- Add timing logs: log at start and end of every agent function with duration_ms
+- Never log: raw SQL queries, full HAR files, full Lighthouse JSON, or API keys
+```
+
+---
+
+### U-03 · Debug a flaky test [CHAT]
+
+```
+This Playwright test is flaky — it passes sometimes and fails other times.
+Here is the test code and the error I'm seeing: [PASTE CODE + ERROR]
+
+Diagnose why it's flaky on IndiaMart specifically. Consider:
+- Dynamic ad loading that changes the DOM after initial networkidle
+- Lazy-loaded images that aren't ready when we measure LCP
+- A/B test variants that change the page structure randomly
+- Geographic/IP-based redirects or content differences
+- Rate limiting or bot detection triggering intermittently
+
+Suggest the minimal fix that makes the test deterministic without
+adding arbitrary timeouts. Use Playwright's built-in waiting strategies.
+```
+
+---
+
+### U-04 · Tune alert thresholds [CHAT]
+
+```
+I've collected 2 weeks of baseline data. Here are the p50/p75/p95 values
+for our key pages: [PASTE DATA FROM GRAFANA OR DB QUERY]
+
+Looking at this data, our current alert thresholds in config/thresholds.ts
+may be too aggressive (too many false positives) or too loose (missing real regressions).
+
+Recommend updated thresholds for each metric on each page based on the actual
+variance in the data. A good threshold should:
+- Catch genuine regressions (deploy-correlated drops > normal variance)
+- Not alert on natural daily variance (time-of-day traffic patterns)
+- Use different baselines for peak hours vs off-peak if the data shows > 15% variance
+
+Output the updated thresholds as a TypeScript object ready to paste into config/thresholds.ts.
+```
+
+---
+
+### U-05 · Review the LLM system prompt [CHAT]
+
+```
+Here is the current system prompt for our analysis agent and the last 3 outputs
+it produced: [PASTE PROMPT + OUTPUTS]
+
+Evaluate the quality of these outputs:
+1. Are the root cause attributions plausible or are they hallucinated guesses?
+2. Is the severity calibration correct (not over-alerting, not under-alerting)?
+3. Are the recommendations specific and actionable, or vague?
+4. Is the confidence score calibrated — does HIGH confidence correlate with
+   cases where the git diff clearly explains the regression?
+
+Suggest specific improvements to the system prompt that would improve:
+- Accuracy of root cause attribution
+- Specificity of recommendations
+- Better use of the script inventory data we're passing in
+```
+
+---
+
+*End of Cursor Prompt Templates*
+*Version 1.0 — March 2026 — IndiaMart Performance Framework*

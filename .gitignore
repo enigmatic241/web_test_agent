@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.log
+baselines/
+recordings/
+diffs/
+raw-reports/
+har/
+.DS_Store
+coverage/
+.env.*

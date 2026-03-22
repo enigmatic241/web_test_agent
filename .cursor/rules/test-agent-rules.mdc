@@ -1,0 +1,300 @@
+---
+alwaysApply: true
+---
+
+# .cursor/rules
+# Agentic Web Performance Testing Framework — IndiaMart
+# Copy this file to .cursor/rules in your project root
+
+# ============================================================
+# PROJECT CONTEXT
+# ============================================================
+
+You are an expert automation engineer building an agentic web
+performance testing framework for IndiaMart (indiamart.com).
+
+The stack is:
+- Runtime: Node.js 20+ (TypeScript agents + orchestrator)
+- Browser automation: Playwright v1.4x
+- Performance auditing: Lighthouse (programmatic API via `lighthouse` / Node API — not the CLI for agents)
+- Network simulation: Chrome DevTools Protocol (CDP) via Playwright
+- Visual QA: pixelmatch + ssim.js for screenshot comparison
+- Metrics storage: PostgreSQL 16 + TimescaleDB extension (use `pg` / `pg-pool` in Node — extension enabled in SQL)
+- Dashboards: Grafana (writes via HTTP API)
+- LLM analysis: Anthropic Claude API (claude-sonnet-4-20250514)
+- Agent orchestration: TypeScript orchestrator (`agents/orchestrator.ts`); LangGraph or Python tooling optional later
+- Alerting: Slack Webhooks + Jira REST API
+- CI: GitHub Actions
+
+The project is structured in 3 phases:
+- Phase 1: Web vitals baseline agent (Playwright + Lighthouse CI + DB + alerts)
+- Phase 2: Network simulation agent + Visual QA agent
+- Phase 3: LLM analysis agent + 3P script audit agent + Jira reporter
+
+# ============================================================
+# CODE STYLE & CONVENTIONS
+# ============================================================
+
+## General
+- Use async/await everywhere — no callbacks; use `Promise.allSettled` for parallel fan-out (not `Promise.all` when one failure must not kill the run)
+- Always handle errors explicitly — no silent catch blocks
+- Prefer named exports over default exports
+- Use TypeScript for all new files (strict mode, no implicit any)
+- File naming: kebab-case for files, PascalCase for classes, camelCase for functions
+- Every function over 10 lines needs a JSDoc or docstring comment
+
+## TypeScript
+- Always define explicit return types on functions
+- Use zod for all external data validation (API responses, config files)
+- Use const assertions for config objects
+- Prefer interfaces over types for object shapes
+- Never use 'any' — use 'unknown' and narrow it
+
+## Python (optional — not used by the default TS orchestrator)
+- If you add a Python service later: 3.12+, type hints, pydantic/dataclasses, asyncio, structlog
+
+## Error handling pattern
+- All agent functions must return a Result<T, Error> style object
+- Never throw from agent functions — return errors as values
+- Log every error with context: agent name, page URL, metric, timestamp
+
+```typescript
+// Preferred pattern
+type Result<T> = { success: true; data: T } | { success: false; error: string; context?: unknown }
+```
+
+# ============================================================
+# PLAYWRIGHT RULES
+# ============================================================
+
+- Always use page.waitForLoadState('networkidle') before measuring — never arbitrary timeouts
+- Set a fixed viewport: { width: 1440, height: 900 } for desktop, { width: 390, height: 844 } for mobile
+- Always set a realistic user agent — never use the default Playwright UA (gets flagged by bot detection)
+- Use storageState for auth if pages require login
+- Run every metric 3 times and return the median — single runs are unreliable
+- Always close the browser context after each test, even on error
+- Set navigationTimeout to 30000 and actionTimeout to 10000
+- Use page.on('console') and page.on('pageerror') to capture JS errors during tests
+- Block ad slots in test runs to reduce flakiness: block *.doubleclick.net, *.googlesyndication.com
+  BUT track them separately in the 3P audit agent
+
+```typescript
+// Standard browser launch config for this project
+const context = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+  recordVideo: { dir: './recordings' }, // always record for visual QA
+});
+```
+
+# ============================================================
+# LIGHTHOUSE CI RULES
+# ============================================================
+
+- Always run Lighthouse in programmatic mode (not CLI) for agent use
+- Use desktop config for desktop tests, mobile config for mobile
+- Set throttling.cpuSlowdownMultiplier to 4 for consistent results
+- Always collect: performance, accessibility scores (we care about both)
+- Extract these specific audits: largest-contentful-paint, cumulative-layout-shift,
+  total-blocking-time, first-contentful-paint, speed-index, interactive
+- Store raw Lighthouse JSON alongside extracted metrics — never discard raw output
+- Use lighthouse/core not the CLI package for programmatic access
+
+```typescript
+// Standard Lighthouse config
+const lighthouseConfig = {
+  extends: 'lighthouse:default',
+  settings: {
+    formFactor: 'desktop',
+    throttling: { cpuSlowdownMultiplier: 4, ...desktopDense4G },
+    screenEmulation: { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false },
+    emulatedUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...',
+  },
+};
+```
+
+# ============================================================
+# CDP NETWORK SIMULATION RULES
+# ============================================================
+
+Use ONLY these 4 standard profiles — never invent custom ones:
+
+```typescript
+export const NETWORK_PROFILES = {
+  '4G': {
+    downloadThroughput: (20 * 1024 * 1024) / 8,   // 20 Mbps
+    uploadThroughput: (10 * 1024 * 1024) / 8,      // 10 Mbps
+    latency: 20,
+  },
+  'SLOW_4G': {
+    downloadThroughput: (8 * 1024 * 1024) / 8,    // 8 Mbps
+    uploadThroughput: (2 * 1024 * 1024) / 8,       // 2 Mbps
+    latency: 60,
+  },
+  'SLOW_3G': {
+    downloadThroughput: (1.6 * 1024 * 1024) / 8,  // 1.6 Mbps
+    uploadThroughput: (768 * 1024) / 8,             // 768 Kbps
+    latency: 300,
+  },
+  'EDGE': {
+    downloadThroughput: (240 * 1024) / 8,          // 240 Kbps
+    uploadThroughput: (200 * 1024) / 8,             // 200 Kbps
+    latency: 840,
+  },
+} as const;
+```
+
+- Always use CDP session from Playwright context — never spawn a separate Chrome instance
+- Reset network conditions to 'NO_THROTTLE' after each test, even on error
+- Log actual vs configured throughput using Resource Timing API to validate simulation
+
+# ============================================================
+# VISUAL QA / SSIM RULES
+# ============================================================
+
+- Baseline screenshots live in: ./baselines/{page-slug}/{viewport}/{timestamp}.png
+- Always capture at full page height, not just viewport
+- SSIM threshold for flicker detection: score drop > 0.15 between consecutive frames = flicker
+- Jank threshold: > 5% dropped frames during a 3-second scroll = jank
+- Screenshot naming convention: {page-slug}_{viewport}_{network-profile}_{timestamp}.png
+- Store diffs in: ./diffs/{run-id}/{filename}_diff.png — always highlight diff pixels in red
+- Never delete baselines automatically — require explicit human approval to update baseline
+
+# ============================================================
+# DATABASE RULES
+# ============================================================
+
+- All metrics tables use TimescaleDB hypertables — time column is always 'measured_at'
+- Never use SELECT * — always name columns explicitly
+- Always use parameterized queries — no string interpolation in SQL
+- Use connection pooling (pg-pool) — never create raw connections per request
+- Index strategy: always index (page_slug, measured_at DESC) and (network_profile, measured_at DESC)
+- Retention policy: raw metrics kept 90 days, daily aggregates kept 2 years
+
+```sql
+-- Standard metrics table pattern
+CREATE TABLE vitals_measurements (
+  id          BIGSERIAL,
+  measured_at TIMESTAMPTZ NOT NULL,
+  page_slug   TEXT NOT NULL,
+  network     TEXT NOT NULL DEFAULT '4G',
+  run_id      UUID NOT NULL,
+  lcp_ms      FLOAT,
+  cls_score   FLOAT,
+  inp_ms      FLOAT,
+  fcp_ms      FLOAT,
+  ttfb_ms     FLOAT,
+  tbt_ms      FLOAT,
+  lighthouse_score INT,
+  raw_json    JSONB
+);
+SELECT create_hypertable('vitals_measurements', 'measured_at');
+```
+
+# ============================================================
+# CLAUDE API / LLM AGENT RULES
+# ============================================================
+
+- Always use model: 'claude-sonnet-4-20250514' — never hardcode an older model string
+- Set max_tokens to 1500 for analysis responses — enough for a detailed narrative
+- Always include the metric delta JSON AND the git diff in the user message
+- System prompt must instruct Claude to respond in JSON with this exact shape:
+  { severity: 'LOW'|'MEDIUM'|'HIGH'|'CRITICAL', summary: string,
+    root_cause: string, affected_metrics: string[], recommendation: string,
+    confidence: 'LOW'|'MEDIUM'|'HIGH' }
+- Never send raw Lighthouse JSON to Claude — summarize to key metrics only
+- Always validate Claude's JSON response with zod before using it
+- Log every LLM call: input token count, output token count, latency, model used
+- Implement exponential backoff on rate limit errors (429) — max 3 retries
+- Cap total user message payload at 10KB — truncate git diff and summaries explicitly before sending
+
+```typescript
+// Standard analysis prompt structure
+const systemPrompt = `You are a web performance engineer analyzing metric regressions.
+You will receive: (1) a JSON object of before/after metrics, (2) a git diff of the deploy.
+Respond ONLY with valid JSON matching the RegressionAnalysis schema. No prose outside JSON.`;
+```
+
+# ============================================================
+# AGENT ORCHESTRATOR RULES
+# ============================================================
+
+- Every agent must emit structured logs: { agent, page, status, duration_ms, error? }
+- Agents run in parallel where possible — use Promise.allSettled, never Promise.all
+  (one agent failure must not kill the whole run)
+- Each agent has a hard timeout: Phase 1 agents = 5 min, Phase 2 = 8 min, Phase 3 = 3 min
+- Store run state in DB — orchestrator must be restartable (idempotent run IDs)
+- Run ID format: {YYYY-MM-DD}-{deploy-sha-8}-{random-4} e.g. 2026-03-21-ab3c4d5e-f9g2
+- On agent failure: retry once, then mark as FAILED and continue other agents
+- Never block the report agent waiting for all agents — report with partial data if needed
+
+# ============================================================
+# ALERTING RULES
+# ============================================================
+
+## Regression thresholds (alert fires if delta exceeds):
+- LCP: > 10% regression vs 7-day median
+- CLS: > 0.05 absolute increase
+- INP: > 15% regression
+- TBT: > 20% regression
+- Lighthouse score: > 5 point drop
+- Jank score: > 8% dropped frames
+
+## Severity levels:
+- CRITICAL: LCP > 4s on 4G, or CLS > 0.25, or Lighthouse score < 50
+- HIGH: LCP 2.5–4s, or CLS 0.1–0.25, or Lighthouse 50–70
+- MEDIUM: any metric crosses 'Needs Improvement' threshold
+- LOW: < 10% regression, still in 'Good' band
+
+## Slack message format:
+- Always include: page name, metric name, before/after value, % change, severity emoji
+- Always include a link to the Grafana dashboard for that page
+- Never alert on LOW severity to main channel — log only
+
+# ============================================================
+# FILE STRUCTURE
+# ============================================================
+
+```
+/
+├── .cursor/
+│   └── rules                    ← this file
+├── agents/
+│   ├── orchestrator.ts          ← main runner
+│   ├── web-vitals-agent.ts      ← Phase 1
+│   ├── network-sim-agent.ts     ← Phase 2
+│   ├── visual-qa-agent.ts       ← Phase 2
+│   ├── script-audit-agent.ts    ← Phase 3
+│   └── analysis-agent.ts        ← Phase 3 (LLM)
+├── reporters/
+│   ├── slack-reporter.ts
+│   └── jira-reporter.ts
+├── db/
+│   ├── schema.sql
+│   ├── migrations/
+│   └── queries.ts
+├── config/
+│   ├── pages.ts                 ← target page definitions
+│   ├── thresholds.ts            ← alert thresholds
+│   └── network-profiles.ts     ← CDP profiles
+├── baselines/                   ← screenshot baselines (gitignored)
+├── recordings/                  ← Playwright video recordings (gitignored)
+├── diffs/                       ← visual diff outputs (gitignored)
+└── .github/
+    └── workflows/
+        └── perf-test.yml        ← CI trigger
+```
+
+# ============================================================
+# WHAT CURSOR SHOULD NOT DO
+# ============================================================
+
+- Do NOT use page.waitForTimeout() — always wait for a specific condition
+- Do NOT use Selenium or WebDriver — Playwright only
+- Do NOT store secrets in code — use environment variables via dotenv
+- Do NOT use console.log in agents — use the structured logger
+- Do NOT hardcode IndiaMart URLs — all pages defined in config/pages.ts
+- Do NOT run tests against production without a feature flag check
+- Do NOT auto-update baselines — always require explicit flag --update-baseline
+- Do NOT send more than 10KB of data to the Claude API in a single call
+- Do NOT use synchronous file I/O (fs.readFileSync) — always use fs.promises
