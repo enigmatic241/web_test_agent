@@ -17,7 +17,7 @@ This document summarizes what was added to the repository, how to run the toolin
 |------|------------------|
 | **Config** | `config/pages.ts` (zod-validated page list), `config/thresholds.ts`, `config/network-profiles.ts` (four CDP profiles only). |
 | **Database** | `db/schema.sql` — TimescaleDB extension, `runs`, `vitals_measurements`, `script_inventory` hypertables, indexes, retention, `daily_vitals_summary` continuous aggregate. `db/pool.ts`, `db/queries.ts` (inserts, baselines, deltas, **`detectRegression`**). |
-| **Agents** | `agents/web-vitals-agent.ts` — programmatic Lighthouse (median of 3), raw JSON under `raw-reports/`. `agents/network-sim-agent.ts` — four CDP profiles in parallel. `agents/visual-qa-agent.ts` — layout diffs (pixelmatch), jank heuristic, optional flicker note for ffmpeg. `agents/script-audit-agent.ts` — HAR-based third-party script inventory. `agents/analysis-agent.ts` — Claude + zod JSON schema, git diff stat, payload cap. `agents/orchestrator.ts` — phases, `--dry-run`, `--page`, DB/Slack/Jira wiring. |
+| **Agents** | `agents/web-vitals-agent.ts` — programmatic Lighthouse (median of 3), raw JSON under `raw-reports/`. `agents/network-sim-agent.ts` — four CDP profiles in parallel using raw CDP (no Playwright overlap). `agents/visual-qa-agent.ts` — layout diffs (pixelmatch), jank heuristic, optional flicker note for ffmpeg. `agents/script-audit-agent.ts` — HAR-based third-party script inventory. `agents/analysis-agent.ts` — Claude or Gemini + zod JSON schema, git diff stat, payload cap. `agents/orchestrator.ts` — phases, `--dry-run`, `--page`, DB/Slack/Jira wiring. |
 | **Reporters** | `reporters/slack-reporter.ts` (Block Kit, retries), `reporters/jira-reporter.ts` (REST v3). |
 | **Utils** | `utils/logger.ts` (Winston), `utils/load-env.ts`, `utils/lighthouse-helpers.ts` (shared Lighthouse config + median runs). |
 | **Scripts** | `scripts/capture-baselines.ts` — desktop/mobile baselines, `--force`, `baselines/manifest.json`. |
@@ -71,7 +71,7 @@ Copy `.env.example` to `.env` and fill in values:
 | `SLACK_WEBHOOK_URL` | Default Slack incoming webhook. |
 | `SLACK_WEBHOOK_URL_PERF_ALERTS` / `SLACK_WEBHOOK_URL_PERF_LOG` | Optional separate webhooks for HIGH/CRITICAL vs MEDIUM. |
 | `JIRA_BASE_URL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY`, `JIRA_USER_EMAIL` | Jira Cloud/Server REST (Phase 3 tickets). |
-| `ANTHROPIC_API_KEY` | Claude analysis agent (Phase 3). |
+| `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | AI analysis agent (Phase 3, provide either). |
 | `TARGET_ENV` | e.g. `staging` or `production`. |
 | `ALLOW_PRODUCTION_RUNS` | Must be `true` to allow `TARGET_ENV=production` (safety gate in orchestrator). |
 | `RUN_PHASE` | `1` (vitals only), `2` (vitals + network + visual), `3` (+ script audit + LLM + Jira when DB configured). |
@@ -130,7 +130,7 @@ RUN_PHASE=3 npm run test:perf
 ```bash
 npm run capture-baselines
 # Overwrite existing baseline folders
-npm run capture-baselines -- --force
+npm run capture-baselines:force
 ```
 
 Outputs under `baselines/{page-slug}/{desktop|mobile}/` and `baselines/manifest.json`.
@@ -189,7 +189,7 @@ Compare current run to **7-day baseline** logic is implemented in **`getBaseline
 
 ### 5.6 Phase 3 analysis
 
-- **Claude** returns JSON validated by zod: `severity`, `summary`, `root_cause`, `affected_metrics`, `recommendation`, `confidence`.
+- **Claude or Gemini** returns JSON validated by zod: `severity`, `summary`, `root_cause`, `affected_metrics`, `recommendation`, `confidence`.
 - **Git diff** is summarized via `git diff <previous>..<current> --stat` for JS/TS/JSON (truncated in the agent).
 
 ### 5.7 Tuning alert noise

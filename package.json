@@ -13,10 +13,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "vitest run tests/visual-smoke.test.ts",
-    "capture-baselines": "tsx scripts/capture-baselines.ts"
+    "capture-baselines": "tsx scripts/capture-baselines.ts",
+    "capture-baselines:force": "tsx scripts/capture-baselines.ts --force",
+    "docker:up": "bash scripts/docker-up.sh",
+    "docker:down": "docker compose down",
+    "e2e": "bash scripts/e2e.sh",
+    "e2e:phase2": "RUN_PHASE=2 bash scripts/e2e.sh",
+    "e2e:phase3": "RUN_PHASE=3 bash scripts/e2e.sh",
+    "e2e:dry": "RUN_PHASE=3 bash scripts/e2e.sh --dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@google/genai": "^1.46.0",
     "chrome-launcher": "^1.1.2",
     "dotenv": "^16.4.7",
     "lighthouse": "^12.2.1",
@@ -34,6 +42,7 @@
     "@types/pg": "^8.11.10",
     "@types/pixelmatch": "^5.2.6",
     "@types/pngjs": "^6.0.5",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

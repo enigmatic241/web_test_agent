@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import type { MetricDelta } from '../db/queries.js';
 import type { ScriptInventory } from './script-audit-agent.js';
@@ -72,16 +73,15 @@ export async function runAnalysisAgent(
   context: AnalysisContext
 ): Promise<Result<RegressionAnalysis>> {
   const started = Date.now();
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return err('ANTHROPIC_API_KEY not set');
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!anthropicKey && !geminiKey) {
+    return err('Neither ANTHROPIC_API_KEY nor GEMINI_API_KEY is set');
   }
 
   const diffRes = await gitDiffStat(context.previousSha, context.deploySha);
   let gitDiffSummary = diffRes.success ? diffRes.data : '(git diff unavailable)';
   gitDiffSummary = truncate(gitDiffSummary, 4000);
-
-  const client = new Anthropic({ apiKey });
 
   const userPayload = {
     metric_delta: delta.metrics,
@@ -111,15 +111,34 @@ No prose outside the JSON object.`;
 
   const runOnce = async (retryHint?: string): Promise<Result<RegressionAnalysis>> => {
     const userMessage = retryHint ? `${userText}\n\nParse error to fix: ${retryHint}` : userText;
-    const msg = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    });
-    const textBlock = msg.content.find((b) => b.type === 'text');
-    const raw =
-      textBlock && textBlock.type === 'text' ? textBlock.text : '';
+    let raw = '';
+    
+    try {
+      if (anthropicKey) {
+        const client = new Anthropic({ apiKey: anthropicKey });
+        const msg = await client.messages.create({
+          model: MODEL,
+          max_tokens: MAX_TOKENS,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
+        });
+        const textBlock = msg.content.find((b) => b.type === 'text');
+        raw = textBlock && textBlock.type === 'text' ? textBlock.text : '';
+      } else if (geminiKey) {
+        const ai = new GoogleGenAI({ apiKey: geminiKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: userMessage,
+          config: {
+            systemInstruction: systemPrompt,
+            responseMimeType: 'application/json',
+          }
+        });
+        raw = response.text || '';
+      }
+    } catch (e: any) {
+      return err(`LLM API err: ${e?.message || String(e)}`);
+    }
     let parsedJson: unknown;
     try {
       parsedJson = JSON.parse(raw);

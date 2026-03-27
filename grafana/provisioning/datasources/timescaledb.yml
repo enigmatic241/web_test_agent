@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: TimescaleDB
+    type: postgres
+    url: db:5432
+    user: perf_user
+    secureJsonData:
+      password: perf_pass
+    jsonData:
+      database: perf_metrics
+      sslmode: disable
+      postgresVersion: 1600   # 16.x
+      timescaledb: true
+    isDefault: true
+    editable: true

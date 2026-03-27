@@ -1,6 +1,5 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { launch as launchChrome } from 'chrome-launcher';
 import type { PageConfig } from '../config/pages.js';
 import type { Result } from '../types/result.js';
 import { ok, err } from '../types/result.js';
@@ -76,24 +75,13 @@ export async function runWebVitalsAgent(
 
   logAgent('info', 'web-vitals start', { agent: 'web-vitals', pageSlug: page.slug, runId });
 
-  let chrome: Awaited<ReturnType<typeof launchChrome>> | undefined;
-
   try {
     const metrics = await withTimeout(
-      (async () => {
-        chrome = await launchChrome({
-          chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'],
-        });
-        const port = chrome.port;
-
-        const m = await runLighthouseMedianAtPort(page.url, port, async (lhr, i) => {
-          const outPath = path.join(rawDir, `${page.slug}-${i + 1}.json`);
-          await fs.mkdir(path.dirname(outPath), { recursive: true });
-          await fs.writeFile(outPath, JSON.stringify(lhr), 'utf8');
-        });
-
-        return m;
-      })(),
+      runLighthouseMedianAtPort(page.url, async (lhr, i) => {
+        const outPath = path.join(rawDir, `${page.slug}-${i + 1}.json`);
+        await fs.mkdir(path.dirname(outPath), { recursive: true });
+        await fs.writeFile(outPath, JSON.stringify(lhr), 'utf8');
+      }),
       PHASE1_TIMEOUT_MS,
       'runWebVitalsAgent'
     );
@@ -121,13 +109,5 @@ export async function runWebVitalsAgent(
       runId,
     });
     return err(message, { page: page.slug, runId });
-  } finally {
-    if (chrome) {
-      try {
-        await chrome.kill();
-      } catch {
-        /* ignore */
-      }
-    }
   }
 }

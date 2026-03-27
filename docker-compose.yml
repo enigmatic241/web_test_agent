@@ -1,0 +1,56 @@
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IndiaMart Performance Test Suite — Docker stack
+#
+# Services:
+#   db       — TimescaleDB (PostgreSQL 16 + TimescaleDB extension)
+#   grafana  — Grafana for dashboards  (optional, comment out if not needed)
+#
+# Schema is applied automatically via docker-entrypoint-initdb.d/
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Database ──────────────────────────────────────────────────────────────
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: perf_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-perf_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-perf_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-perf_metrics}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - perf_db_data:/var/lib/postgresql/data
+      # Auto-applies db/schema.sql on first boot (container init only)
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-perf_user} -d ${POSTGRES_DB:-perf_metrics}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Grafana (disabled — uncomment to enable) ────────────────────────────
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: perf_grafana
+  #   restart: unless-stopped
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   ports:
+  #     - "${GRAFANA_PORT:-3001}:3000"
+  #   environment:
+  #     GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+  #     GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+  #     GF_USERS_ALLOW_SIGN_UP: "false"
+  #   volumes:
+  #     - perf_grafana_data:/var/lib/grafana
+  #     - ./grafana/provisioning:/etc/grafana/provisioning:ro
+
+volumes:
+  perf_db_data:
+  # perf_grafana_data:  # uncomment when grafana is re-enabled
