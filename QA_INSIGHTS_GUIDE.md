@@ -62,3 +62,67 @@ The framework is divided into 3 automated phases. Each phase replaces a manual Q
    npm run capture-baselines:force
    ```
    This tells the agent "The new design is correct, stop alerting on visual diffs."
+
+---
+
+## 4. Building Your First Grafana Dashboard
+
+When you open Grafana for the first time, it is a blank canvas. Here is a 3-minute guide to building a "Core Web Vitals Tracker" dashboard.
+
+### Step 1: Create a Dashboard
+1. Click the **+** (Plus) icon in the left sidebar and select **Dashboard**.
+2. Click **Add visualization**.
+3. Select **TimescaleDB** as the data source.
+
+### Step 2: Plot LCP Over Time (Line Chart)
+1. In the query box, click **Edit SQL** (or switch to Code).
+2. Paste this exact query to track visual load speed:
+```sql
+SELECT
+  measured_at AS "time",
+  page_slug AS "metric",
+  lcp_ms AS "LCP (ms)"
+FROM vitals_measurements
+WHERE
+  $__timeFilter(measured_at) 
+  AND network = '4G'
+ORDER BY 1
+```
+3. Click **Apply** (top right). You now have a line chart!
+
+### Step 3: Plot JavaScript Freezes (TBT Over Time)
+1. Click **Add Panel**.
+2. Select **TimescaleDB**.
+3. Paste this query to track interactivity delays:
+```sql
+SELECT
+  measured_at AS "time",
+  page_slug AS "metric",
+  tbt_ms AS "Total Blocking Time (ms)"
+FROM vitals_measurements
+WHERE
+  $__timeFilter(measured_at)
+ORDER BY 1
+```
+4. Click **Apply**.
+
+### Step 4: Show the Latest Raw Data (Table format)
+1. Click **Add Panel**.
+2. Change the visualization type from "Time Series" to **Table** (in the top right panel).
+3. Paste this query:
+```sql
+SELECT 
+  measured_at AS "Time",
+  page_slug AS "Page",
+  network AS "Network",
+  lighthouse_performance_score AS "Score",
+  lcp_ms AS "LCP (ms)",
+  cls_score AS "CLS",
+  run_id AS "Run ID"
+FROM vitals_measurements
+ORDER BY measured_at DESC
+LIMIT 10
+```
+4. Click **Apply**. 
+
+*Don't forget to click the **Save** icon at the top of the dashboard so your QA team can bookmark the URL!*
