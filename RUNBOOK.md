@@ -11,6 +11,8 @@ A short guide on **what to run**, **in what order**, and **where to find things*
 | E2E runner script | `scripts/e2e.sh` |
 | Baseline capture script | `scripts/capture-baselines.ts` |
 | Docker stack helper | `scripts/docker-up.sh` |
+| **Sitemap loader** | **`utils/sitemap-loader.ts`** |
+| **Sitemap preview script** | **`scripts/sitemap-preview.ts`** |
 | npm shortcuts | `package.json` → `scripts` block |
 | Captured baselines | `baselines/{page-slug}/{desktop\|mobile}/` |
 | Baseline index | `baselines/manifest.json` |
@@ -113,6 +115,91 @@ What runs additionally vs Phase 2:
 
 ---
 
+## 🗺️ Sitemap-Driven Testing
+
+Instead of the fixed curated page list in `config/pages.ts`, you can point the suite
+at a live sitemap URL and let it automatically discover, sample, and test pages.
+
+IndiaMart uses a **2-level sitemap index** structure:
+```
+https://www.indiamart.com/company/fcp-sitemap-ssl.xml  (index of 1,735 child sitemaps)
+  └── fcp-smp-ssl1.xml  → thousands of supplier/product/category URLs
+  └── fcp-smp-ssl2.xml  → ...
+  └── ...
+```
+
+### Step 1 — Preview first (no browser, instant)
+
+Always run the preview to see what will be tested before committing to a real run:
+
+```bash
+npm run sitemap:preview -- \
+  --sitemap https://www.indiamart.com/company/fcp-sitemap-ssl.xml \
+  --sample 10 \
+  --max-sitemaps 20
+```
+
+This prints a breakdown table showing URL counts per page type, which URLs were
+sampled, and an estimated runtime — without launching any browser.
+
+### Step 2 — Run on a random sample (recommended)
+
+Fetch 20 randomly-picked child sitemaps, pick 10 URLs per page type, run Phase 1:
+
+```bash
+RUN_PHASE=1 npm run test:perf -- \
+  --sitemap https://www.indiamart.com/company/fcp-sitemap-ssl.xml \
+  --sample 10 \
+  --max-sitemaps 20
+```
+
+With 3 page types × 10 URLs × 3 Lighthouse runs ≈ **~23 minutes**.
+
+Increase `--sample` or `--max-sitemaps` for broader coverage:
+```bash
+# 15 URLs per type, from 50 child sitemaps, 3 pages in parallel
+RUN_PHASE=1 npm run test:perf -- \
+  --sitemap https://www.indiamart.com/company/fcp-sitemap-ssl.xml \
+  --sample 15 \
+  --max-sitemaps 50 \
+  --concurrency 3
+```
+
+### Step 3 — Run on ALL URLs (use with caution ⚠️)
+
+> ⚠️ **Very slow.** 1,735 child sitemaps × thousands of URLs each.
+> Use `--sample all` with a small `--max-sitemaps` to control scope.
+
+```bash
+# All URLs from 20 child sitemaps (no per-type sampling cap)
+RUN_PHASE=1 npm run test:perf -- \
+  --sitemap https://www.indiamart.com/company/fcp-sitemap-ssl.xml \
+  --sample all \
+  --max-sitemaps 20 \
+  --concurrency 5
+
+# Truly all URLs from all sitemaps (could take hours)
+RUN_PHASE=1 npm run test:perf -- \
+  --sitemap https://www.indiamart.com/company/fcp-sitemap-ssl.xml \
+  --sample all \
+  --max-sitemaps all \
+  --concurrency 5
+```
+
+### Sitemap CLI Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--sitemap <url\|file>` | — | Sitemap index URL or local XML file path |
+| `--sample <N\|all>` | `15` | URLs to pick per page type (after shuffle) |
+| `--max-sitemaps <N\|all>` | `20` | Child sitemaps to fetch from the index |
+| `--concurrency <N>` | `1` | Pages to test in parallel |
+
+> **Note:** `--sitemap` overrides `--page`. The curated `config/pages.ts` list
+> is used only when `--sitemap` is not passed.
+
+---
+
 ## 🧪 Unit Tests Only (no Lighthouse, no browser)
 
 ```bash
@@ -129,10 +216,11 @@ npm run smoke
 |---------|-------------|
 | `npm run capture-baselines` | Capture PNG baselines for all pages |
 | `npm run capture-baselines:force` | Overwrite existing baselines |
-| `npm run e2e` | Phase 1 — Web Vitals |
+| `npm run e2e` | Phase 1 — Web Vitals (curated pages) |
 | `npm run e2e:phase2` | Phase 2 — Vitals + Network + Visual |
 | `npm run e2e:phase3` | Phase 3 — Full suite + AI + Jira |
 | `npm run e2e:dry` | Phase 3 dry-run (no side-effects) |
+| `npm run sitemap:preview` | Preview sitemap sampling — no browser |
 | `npm run docker:up` | Start TimescaleDB + Grafana containers |
 | `npm run docker:down` | Stop containers |
 | `npm test` | Unit tests (Vitest) |

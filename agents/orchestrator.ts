@@ -1,6 +1,7 @@
 import '../utils/load-env.js';
 import { randomUUID } from 'crypto';
 import { PAGES, type PageConfig } from '../config/pages.js';
+import { loadFromSitemap } from '../utils/sitemap-loader.js';
 import {
   insertMeasurement,
   insertRun,
@@ -24,14 +25,42 @@ type RunPhase = 1 | 2 | 3;
 function parseArgs(argv: string[]): {
   dryRun: boolean;
   pageSlug?: string;
+  sitemapSource?: string;
+  samplePerType: number | 'all';
+  maxChildSitemaps: number | 'all';
+  concurrency: number;
 } {
   const dryRun = argv.includes('--dry-run');
+
   let pageSlug: string | undefined;
-  const i = argv.indexOf('--page');
-  if (i >= 0 && argv[i + 1]) {
-    pageSlug = argv[i + 1];
-  }
-  return { dryRun, pageSlug };
+  const pi = argv.indexOf('--page');
+  if (pi >= 0 && argv[pi + 1]) pageSlug = argv[pi + 1];
+
+  let sitemapSource: string | undefined;
+  const si = argv.indexOf('--sitemap');
+  if (si >= 0 && argv[si + 1]) sitemapSource = argv[si + 1];
+
+  const sampleArg = (() => {
+    const idx = argv.indexOf('--sample');
+    return idx >= 0 ? argv[idx + 1] : '15';
+  })();
+  const samplePerType: number | 'all' =
+    sampleArg === 'all' ? 'all' : Math.max(1, parseInt(sampleArg ?? '15', 10));
+
+  const maxArg = (() => {
+    const idx = argv.indexOf('--max-sitemaps');
+    return idx >= 0 ? argv[idx + 1] : '20';
+  })();
+  const maxChildSitemaps: number | 'all' =
+    maxArg === 'all' ? 'all' : Math.max(1, parseInt(maxArg ?? '20', 10));
+
+  const concurrencyArg = (() => {
+    const idx = argv.indexOf('--concurrency');
+    return idx >= 0 ? argv[idx + 1] : '1';
+  })();
+  const concurrency = Math.max(1, parseInt(concurrencyArg ?? '1', 10));
+
+  return { dryRun, pageSlug, sitemapSource, samplePerType, maxChildSitemaps, concurrency };
 }
 
 function getPhase(): RunPhase {
@@ -99,12 +128,36 @@ async function runPagePhase12(
  */
 export async function main(): Promise<void> {
   assertProductionAllowed();
-  const { dryRun, pageSlug } = parseArgs(process.argv.slice(2));
+  const { dryRun, pageSlug, sitemapSource, samplePerType, maxChildSitemaps, concurrency } =
+    parseArgs(process.argv.slice(2));
   const phase = getPhase();
 
-  const pages = pageSlug ? PAGES.filter((p) => p.slug === pageSlug) : PAGES;
-  if (pages.length === 0) {
-    throw new Error(`No page found for slug: ${pageSlug}`);
+  // ── Resolve page list ─────────────────────────────────────────────────────
+  let pages: PageConfig[];
+
+  if (sitemapSource) {
+    // Sitemap mode — ignore --page flag when --sitemap is set
+    const sitemapResult = await loadFromSitemap({
+      source: sitemapSource,
+      samplePerType,
+      maxChildSitemaps,
+    });
+    pages = sitemapResult.pages;
+    logger.info('orchestrator: sitemap mode', {
+      source: sitemapSource,
+      samplePerType,
+      totalPages: pages.length,
+      typeCounts: sitemapResult.typeCounts,
+    });
+    if (pages.length === 0) {
+      throw new Error('Sitemap loaded but no URLs were selected — check --sample and --types flags.');
+    }
+  } else {
+    // Default curated-pages mode
+    pages = pageSlug ? PAGES.filter((p) => p.slug === pageSlug) : PAGES;
+    if (pages.length === 0) {
+      throw new Error(`No page found for slug: ${pageSlug}`);
+    }
   }
 
   const runId = randomUUID();
@@ -134,7 +187,8 @@ export async function main(): Promise<void> {
   const grafanaBase = process.env.GRAFANA_BASE_URL ?? '';
   const rawBase = process.env.RAW_REPORTS_BASE_URL ?? '';
 
-  for (const page of pages) {
+  // ── Run pages (sequential or concurrent batches) ──────────────────────────
+  const runPage = async (page: PageConfig) => {
     const pageResult = await runPagePhase12(page, runId, phase);
 
     if (pageResult.vitals.success) {
@@ -220,6 +274,22 @@ export async function main(): Promise<void> {
             }
           }
         }
+      }
+    }
+  };
+
+  // Process in batches of `concurrency`
+  for (let i = 0; i < pages.length; i += concurrency) {
+    const batch = pages.slice(i, i + concurrency);
+    if (concurrency > 1) {
+      logger.info(`orchestrator: running batch ${Math.floor(i / concurrency) + 1}`, {
+        pages: batch.map((p) => p.slug),
+        concurrency,
+      });
+      await Promise.allSettled(batch.map(runPage));
+    } else {
+      for (const page of batch) {
+        await runPage(page);
       }
     }
   }

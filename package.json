@@ -20,7 +20,10 @@
     "e2e": "bash scripts/e2e.sh",
     "e2e:phase2": "RUN_PHASE=2 bash scripts/e2e.sh",
     "e2e:phase3": "RUN_PHASE=3 bash scripts/e2e.sh",
-    "e2e:dry": "RUN_PHASE=3 bash scripts/e2e.sh --dry-run"
+    "e2e:dry": "RUN_PHASE=3 bash scripts/e2e.sh --dry-run",
+    "sitemap:preview": "tsx scripts/sitemap-preview.ts",
+    "e2e:sitemap": "bash scripts/e2e.sh",
+    "e2e:sitemap:all": "bash scripts/e2e.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
