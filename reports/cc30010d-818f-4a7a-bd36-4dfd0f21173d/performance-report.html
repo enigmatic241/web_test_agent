@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Performance Report — cc30010d</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;font-size:13px;line-height:1.5}
+  a{color:#3b82f6;text-decoration:none}
+
+  /* Cover */
+  .cover{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);color:#fff;padding:48px 52px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0;page-break-after:always}
+  .cover-left h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px}
+  .cover-left .subtitle{color:#94a3b8;font-size:13px;margin-bottom:24px}
+  .cover-meta{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .cover-meta-item{display:flex;gap:12px;font-size:12px}
+  .cover-meta-item .label{color:#64748b;min-width:80px}
+  .cover-meta-item .value{color:#e2e8f0;font-weight:500}
+  .cover-right{text-align:right}
+  .cover-score{font-size:56px;font-weight:700;color:#fff;line-height:1}
+  .cover-score-label{color:#64748b;font-size:12px;margin-top:4px}
+
+  /* Summary cards */
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px;background:#fff;border-bottom:1px solid #e2e8f0}
+  .stat-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px}
+  .stat-card .stat-value{font-size:28px;font-weight:700;color:#0f172a;line-height:1}
+  .stat-card .stat-label{font-size:11px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+
+  /* Page cards */
+  .pages{padding:24px 32px;display:flex;flex-direction:column;gap:24px}
+  .page-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;page-break-inside:avoid}
+  .page-header{padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .page-info{flex:1;min-width:0}
+  .page-slug{font-size:16px;font-weight:700;color:#1e293b;margin-bottom:2px}
+  .page-url{font-size:11px;color:#64748b;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px}
+  .runs-badge{font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:99px}
+
+  /* Score gauges */
+  .scores-row{display:flex;gap:16px;flex-shrink:0}
+  .score-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .score-label{font-size:9px;color:#94a3b8;text-align:center;white-space:nowrap}
+  .gauge{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+  .gauge svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+  .gauge span{position:relative;font-size:12px;font-weight:700;color:#0f172a}
+
+  /* Metrics table */
+  .metrics-table{width:100%;border-collapse:collapse}
+  .metrics-table th{background:#f8fafc;color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;padding:8px 16px;text-align:left;border-bottom:1px solid #e2e8f0}
+  .metrics-table td{padding:10px 16px;border-bottom:1px solid #f8fafc;vertical-align:middle}
+  .metrics-table tr:last-child td{border-bottom:none}
+  .metrics-table tr:hover td{background:#fafafa}
+  .metric-desc{color:#94a3b8;font-size:11px;font-weight:400;margin-left:6px}
+  .metric-value{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+  .threshold{color:#94a3b8;font-size:11px}
+
+  /* Row highlight */
+  .metrics-table tr.good td:first-child{border-left:3px solid #22c55e}
+  .metrics-table tr.needs-improvement td:first-child{border-left:3px solid #f59e0b}
+  .metrics-table tr.poor td:first-child{border-left:3px solid #ef4444}
+  .metrics-table tr.na td:first-child{border-left:3px solid #e2e8f0}
+
+  /* Badges */
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;text-transform:capitalize}
+  .badge-good{background:#dcfce7;color:#166534}
+  .badge-needs-improvement{background:#fef9c3;color:#854d0e}
+  .badge-poor{background:#fee2e2;color:#991b1b}
+  .badge-na{background:#f1f5f9;color:#64748b}
+
+  /* Footer */
+  .footer{padding:16px 32px;text-align:center;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;background:#fff;margin-top:8px}
+
+  @media print{
+    body{background:#fff}
+    .cover{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+    .badge,.gauge,.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover page -->
+<div class="cover">
+  <div class="cover-left">
+    <h1>Performance Report</h1>
+    <p class="subtitle">IndiaMart Perf Suite · Lighthouse Audit</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><span class="label">Run ID</span><span class="value">cc30010d-818f-4a7a-bd36-4dfd0f21173d</span></div>
+      <div class="cover-meta-item"><span class="label">Generated</span><span class="value">8 April 2026 at 8:32 pm</span></div>
+      <div class="cover-meta-item"><span class="label">Pages</span><span class="value">30 pages audited</span></div>
+      <div class="cover-meta-item"><span class="label">Method</span><span class="value">Lighthouse median of 3 runs</span></div>
+    </div>
+  </div>
+  <div class="cover-right">
+    <div class="cover-score">98</div>
+    <div class="cover-score-label">Avg Performance Score</div>
+  </div>
+</div>
+
+<!-- Summary stats -->
+<div class="summary">
+  <div class="stat-card">
+    <div class="stat-value">30</div>
+    <div class="stat-label">Pages Audited</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#22c55e">98</div>
+    <div class="stat-label">Avg Perf Score</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#22c55e">30/30</div>
+    <div class="stat-label">Good LCP</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#f59e0b">29/30</div>
+    <div class="stat-label">Good CLS</div>
+  </div>
+</div>
+
+<!-- Per-page detail cards -->
+<div class="pages">
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-21</h2>
+          <a class="page-url" href="https://www.indiamart.com/vinbro-plastic/plastics-chair-4080.html">https://www.indiamart.com/vinbro-plastic/plastics-chair-4080.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.04s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.001</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">54ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-22</h2>
+          <a class="page-url" href="https://www.indiamart.com/gunjals-industries/container-corner-iso-1161.html">https://www.indiamart.com/gunjals-industries/container-corner-iso-1161.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.99s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">38ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">70ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-23</h2>
+          <a class="page-url" href="https://www.indiamart.com/jiya-enterprise-pune/mega-mass-4000.html">https://www.indiamart.com/jiya-enterprise-pune/mega-mass-4000.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.03s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">61ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-24</h2>
+          <a class="page-url" href="https://www.indiamart.com/triveni-creation/micro-velvet-9000.html">https://www.indiamart.com/triveni-creation/micro-velvet-9000.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.10s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.75s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">39ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">53ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.77s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-25</h2>
+          <a class="page-url" href="https://www.indiamart.com/radhey-creationsurat/velvet-9000.html">https://www.indiamart.com/radhey-creationsurat/velvet-9000.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.06s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">41ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">54ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-26</h2>
+          <a class="page-url" href="https://www.indiamart.com/sri-ramdev-general-store/plastics-chair-4080.html">https://www.indiamart.com/sri-ramdev-general-store/plastics-chair-4080.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.04s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.83s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">38ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">43ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.83s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-27</h2>
+          <a class="page-url" href="https://www.indiamart.com/omegaagencies/plastics-chair-4080.html">https://www.indiamart.com/omegaagencies/plastics-chair-4080.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="96, 100" stroke-linecap="round"/></svg>
+    <span>96</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.17s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.77s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">113ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.91s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-28</h2>
+          <a class="page-url" href="https://www.indiamart.com/goodearth-machines/kk-ic-8626.html">https://www.indiamart.com/goodearth-machines/kk-ic-8626.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="96, 100" stroke-linecap="round"/></svg>
+    <span>96</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.98s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">41ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">51ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-29</h2>
+          <a class="page-url" href="https://www.indiamart.com/sri-spatiha-traders/electric-motor-kk-im4-1030.html">https://www.indiamart.com/sri-spatiha-traders/electric-motor-kk-im4-1030.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.97s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.006</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">49ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">category-30</h2>
+          <a class="page-url" href="https://www.indiamart.com/vetrivel-furnitures/plastics-chair-4080.html">https://www.indiamart.com/vetrivel-furnitures/plastics-chair-4080.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.06s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.001</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">37ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">47ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-1</h2>
+          <a class="page-url" href="https://www.indiamart.com/stalwart-industries-private-limited/stainless-steel-tablewares.html">https://www.indiamart.com/stalwart-industries-private-limited/stainless-steel-tablewares.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.96s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">37ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">39ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-10</h2>
+          <a class="page-url" href="https://www.indiamart.com/grado-pumps/products.html">https://www.indiamart.com/grado-pumps/products.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.05s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">46ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">47ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-2</h2>
+          <a class="page-url" href="https://www.indiamart.com/g-r-k-imitation-jewellery/artificial-jewellery.html">https://www.indiamart.com/g-r-k-imitation-jewellery/artificial-jewellery.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="97, 100" stroke-linecap="round"/></svg>
+    <span>97</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.09s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">35ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">55ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-3</h2>
+          <a class="page-url" href="https://www.indiamart.com/saru-aikoh-chemicals-private-limited/products.html">https://www.indiamart.com/saru-aikoh-chemicals-private-limited/products.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.99s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">38ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">48ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-4</h2>
+          <a class="page-url" href="https://www.indiamart.com/hs-racks-tirupati/photos.html">https://www.indiamart.com/hs-racks-tirupati/photos.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="88, 100" stroke-linecap="round"/></svg>
+    <span>88</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.98s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="needs-improvement">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.214</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-needs-improvement">needs improvement</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">38ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">56ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-5</h2>
+          <a class="page-url" href="https://www.indiamart.com/sairam-collection-mumbai/products-and-services.html">https://www.indiamart.com/sairam-collection-mumbai/products-and-services.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="97, 100" stroke-linecap="round"/></svg>
+    <span>97</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.06s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">38ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">45ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.85s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-6</h2>
+          <a class="page-url" href="https://www.indiamart.com/inaaya-fashion/aboutus.html">https://www.indiamart.com/inaaya-fashion/aboutus.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="96, 100" stroke-linecap="round"/></svg>
+    <span>96</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.24s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.79s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">50ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">45ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.92s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-7</h2>
+          <a class="page-url" href="https://www.indiamart.com/omsaipackaging-faridabad/aboutus.html">https://www.indiamart.com/omsaipackaging-faridabad/aboutus.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="96, 100" stroke-linecap="round"/></svg>
+    <span>96</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.24s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.80s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">40ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">44ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.86s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-8</h2>
+          <a class="page-url" href="https://www.indiamart.com/shankh-designer/ladies-saree.html">https://www.indiamart.com/shankh-designer/ladies-saree.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="96, 100" stroke-linecap="round"/></svg>
+    <span>96</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.37s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.73s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">41ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">51ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">1.00s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">other-9</h2>
+          <a class="page-url" href="https://www.indiamart.com/hetronic-systems-india-pvt-ltd-new-delhi/universal-joints.html">https://www.indiamart.com/hetronic-systems-india-pvt-ltd-new-delhi/universal-joints.html</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.98s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.83s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">35ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">48ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.83s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-11</h2>
+          <a class="page-url" href="https://www.indiamart.com/moksh-entps-gurgaon/">https://www.indiamart.com/moksh-entps-gurgaon/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.03s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">42ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">44ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-12</h2>
+          <a class="page-url" href="https://www.indiamart.com/bliss-thai-spa/">https://www.indiamart.com/bliss-thai-spa/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="84, 100" stroke-linecap="round"/></svg>
+    <span>84</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.86s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">63ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-13</h2>
+          <a class="page-url" href="https://www.indiamart.com/star-enterprise-limla/">https://www.indiamart.com/star-enterprise-limla/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="84, 100" stroke-linecap="round"/></svg>
+    <span>84</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.85s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.001</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.83s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">37ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">79ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.83s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-14</h2>
+          <a class="page-url" href="https://www.indiamart.com/jaincomputer-gallery/">https://www.indiamart.com/jaincomputer-gallery/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="96, 100" stroke-linecap="round"/></svg>
+    <span>96</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.21s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.001</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.82s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">38ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">72ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.94s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-15</h2>
+          <a class="page-url" href="https://www.indiamart.com/sumitcool-home-appliances/">https://www.indiamart.com/sumitcool-home-appliances/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="97, 100" stroke-linecap="round"/></svg>
+    <span>97</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.12s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">40ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">71ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.86s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-16</h2>
+          <a class="page-url" href="https://www.indiamart.com/jyotiplywood/">https://www.indiamart.com/jyotiplywood/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="97, 100" stroke-linecap="round"/></svg>
+    <span>97</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/></svg>
+    <span>86</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.16s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.002</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.81s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">68ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.90s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-17</h2>
+          <a class="page-url" href="https://www.indiamart.com/bharat-bearings-hosur/">https://www.indiamart.com/bharat-bearings-hosur/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.99s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.006</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.78s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">37ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">50ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.78s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-18</h2>
+          <a class="page-url" href="https://www.indiamart.com/shubha-s-chennai/">https://www.indiamart.com/shubha-s-chennai/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="85, 100" stroke-linecap="round"/></svg>
+    <span>85</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">1.05s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.79s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">37ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">49ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.80s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-19</h2>
+          <a class="page-url" href="https://www.indiamart.com/da-phone/">https://www.indiamart.com/da-phone/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="84, 100" stroke-linecap="round"/></svg>
+    <span>84</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">39ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">89ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.84s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-card">
+      <div class="page-header">
+        <div class="page-info">
+          <h2 class="page-slug">supplier-20</h2>
+          <a class="page-url" href="https://www.indiamart.com/company/52004055/">https://www.indiamart.com/company/52004055/</a>
+          <span class="runs-badge">3 Lighthouse runs · median</span>
+        </div>
+        <div class="scores-row">
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="98, 100" stroke-linecap="round"/></svg>
+    <span>98</span></div><span class="score-label">Performance</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#f59e0b">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="84, 100" stroke-linecap="round"/></svg>
+    <span>84</span></div><span class="score-label">Accessibility</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="100, 100" stroke-linecap="round"/></svg>
+    <span>100</span></div><span class="score-label">Best Practices</span></div>
+          <div class="score-item"><div class="gauge" style="--color:#22c55e">
+    <svg viewBox="0 0 36 36"><path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <path class="gauge-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="92, 100" stroke-linecap="round"/></svg>
+    <span>92</span></div><span class="score-label">SEO</span></div>
+        </div>
+      </div>
+      <table class="metrics-table">
+        <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="good">
+            <td><strong>LCP</strong> <span class="metric-desc">Largest Contentful Paint</span></td>
+            <td class="metric-value">0.87s</td>
+            <td class="threshold">≤ 2.5s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>CLS</strong> <span class="metric-desc">Cumulative Layout Shift</span></td>
+            <td class="metric-value">0.000</td>
+            <td class="threshold">≤ 0.1</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>INP</strong> <span class="metric-desc">Interaction to Next Paint</span></td>
+            <td class="metric-value">—</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-na">na</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>FCP</strong> <span class="metric-desc">First Contentful Paint</span></td>
+            <td class="metric-value">0.86s</td>
+            <td class="threshold">≤ 1.8s</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TTFB</strong> <span class="metric-desc">Time to First Byte</span></td>
+            <td class="metric-value">36ms</td>
+            <td class="threshold">≤ 800ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="good">
+            <td><strong>TBT</strong> <span class="metric-desc">Total Blocking Time</span></td>
+            <td class="metric-value">58ms</td>
+            <td class="threshold">≤ 200ms</td>
+            <td><span class="badge badge-good">good</span></td>
+          </tr>
+          <tr class="na">
+            <td><strong>Speed Index</strong> <span class="metric-desc">Visual load speed</span></td>
+            <td class="metric-value">0.86s</td>
+            <td class="threshold">≤ 3.4s</td>
+            <td><span class="badge badge-na">info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+</div>
+
+<div class="footer">
+  IndiaMart Perf Suite · Report generated 8 April 2026 at 8:32 pm · Run ID: cc30010d-818f-4a7a-bd36-4dfd0f21173d
+</div>
+
+</body>
+</html>

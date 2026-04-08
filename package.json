@@ -23,7 +23,8 @@
     "e2e:dry": "RUN_PHASE=3 bash scripts/e2e.sh --dry-run",
     "sitemap:preview": "tsx scripts/sitemap-preview.ts",
     "e2e:sitemap": "bash scripts/e2e.sh",
-    "e2e:sitemap:all": "bash scripts/e2e.sh"
+    "e2e:sitemap:all": "bash scripts/e2e.sh",
+    "report:pdf": "tsx scripts/generate-pdf-report.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

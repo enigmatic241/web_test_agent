@@ -13,10 +13,12 @@ A short guide on **what to run**, **in what order**, and **where to find things*
 | Docker stack helper | `scripts/docker-up.sh` |
 | **Sitemap loader** | **`utils/sitemap-loader.ts`** |
 | **Sitemap preview script** | **`scripts/sitemap-preview.ts`** |
+| **PDF report script** | **`scripts/generate-pdf-report.ts`** |
 | npm shortcuts | `package.json` → `scripts` block |
 | Captured baselines | `baselines/{page-slug}/{desktop\|mobile}/` |
 | Baseline index | `baselines/manifest.json` |
 | Lighthouse raw reports | `raw-reports/{run-id}/` |
+| **PDF & HTML reports** | **`reports/{run-id}/`** |
 | Visual diff PNGs | `diffs/{run-id}/` |
 | Playwright recordings | `recordings/{run-id}/` |
 | Grafana dashboard | http://localhost:3001 (admin / admin) |
@@ -210,6 +212,38 @@ npm run smoke
 
 ---
 
+## 📄 PDF Performance Report
+
+Generate a polished PDF report from any Lighthouse run's JSON files.
+Uses **Playwright** (already installed) to render — no extra dependencies.
+
+Output saved to → `reports/{run-id}/performance-report.pdf`
+
+```bash
+# Generate PDF from the most recent run (auto-detected)
+npm run report:pdf
+
+# Generate PDF from a specific run
+npm run report:pdf -- --run-id 2cfd5cd4-a3e5-4e73-9423-02cdb6cae424
+
+# Save to a custom path
+npm run report:pdf -- --run-id <uuid> --out ./my-report.pdf
+```
+
+**What the PDF contains:**
+- Cover page with run ID, date, avg Performance score
+- Summary stats: pages audited, avg score, LCP pass rate, CLS pass rate
+- Per-page cards with:
+  - Four category score gauges (Performance, Accessibility, Best Practices, SEO)
+  - Full metrics table: LCP, CLS, INP, FCP, TTFB, TBT, Speed Index
+  - Color-coded pass/fail badges vs Core Web Vitals thresholds
+  - Median values across all Lighthouse runs for that page
+
+> **Tip:** Also generates `performance-report.html` alongside the PDF so you
+> can open it in a browser for a live, clickable version.
+
+---
+
 ## 📋 Full Command Reference
 
 | Command | What it does |
@@ -221,6 +255,7 @@ npm run smoke
 | `npm run e2e:phase3` | Phase 3 — Full suite + AI + Jira |
 | `npm run e2e:dry` | Phase 3 dry-run (no side-effects) |
 | `npm run sitemap:preview` | Preview sitemap sampling — no browser |
+| `npm run report:pdf` | Generate PDF report from latest run |
 | `npm run docker:up` | Start TimescaleDB + Grafana containers |
 | `npm run docker:down` | Stop containers |
 | `npm test` | Unit tests (Vitest) |
