@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IndiaMart Perf Suite — Dashboard</title>
+  <meta name="description" content="Local dashboard for running IndiaMart performance tests and viewing Lighthouse PDF reports." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & tokens ──────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #080d1a;
+      --bg-1:        #0d1426;
+      --bg-2:        #111827;
+      --bg-3:        #1a2235;
+      --surface:     rgba(255,255,255,0.04);
+      --border:      rgba(255,255,255,0.08);
+      --border-h:    rgba(99,102,241,0.5);
+      --text:        #e2e8f0;
+      --text-muted:  #64748b;
+      --text-dim:    #94a3b8;
+      --accent:      #6366f1;
+      --accent-glow: rgba(99,102,241,0.35);
+      --accent-2:    #8b5cf6;
+      --green:       #22c55e;
+      --yellow:      #f59e0b;
+      --red:         #ef4444;
+      --cyan:        #06b6d4;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --sidebar-w:   260px;
+      --header-h:    60px;
+      --transition:  0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html, body {
+      height: 100%; background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6;
+      overflow: hidden;
+    }
+
+    /* ── Scrollbar ──────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar       { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* Header */
+    header {
+      height: var(--header-h); display: flex; align-items: center;
+      padding: 0 24px; gap: 16px;
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0; position: relative; z-index: 10;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .logo-title { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; }
+    .logo-sub   { font-size: 11px; color: var(--text-muted); }
+
+    .header-spacer { flex: 1; }
+
+    #status-pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 99px;
+      font-size: 12px; font-weight: 500;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    #status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text-muted);
+      transition: var(--transition);
+    }
+    #status-pill.running  { border-color: var(--green); }
+    #status-pill.running  #status-dot { background: var(--green); animation: pulse 1.2s ease infinite; }
+    #status-pill.error    { border-color: var(--red); }
+    #status-pill.error    #status-dot { background: var(--red); }
+    #status-pill.idle     { border-color: var(--border); }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+    }
+
+    /* Body area */
+    .body { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    aside {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--bg-1); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+    }
+
+    .sidebar-section { padding: 16px 12px 8px; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      color: var(--text-muted); text-transform: uppercase; padding: 0 8px 8px;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      border: 1px solid transparent; background: transparent;
+      color: var(--text-dim); cursor: pointer; text-align: left;
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      transition: var(--transition); position: relative; overflow: hidden;
+    }
+    .action-btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      opacity: 0; transition: var(--transition);
+    }
+    .action-btn:hover:not(:disabled) {
+      color: #fff; border-color: var(--border-h);
+      background: var(--surface);
+      transform: translateX(2px);
+    }
+    .action-btn:hover:not(:disabled)::before { opacity: 0.08; }
+    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .action-btn.active   {
+      background: rgba(99,102,241,0.15); border-color: var(--accent);
+      color: #c7d2fe;
+    }
+    .action-icon {
+      font-size: 16px; width: 20px; text-align: center;
+      position: relative; z-index: 1;
+    }
+    .action-label { position: relative; z-index: 1; flex: 1; }
+    .action-phase-badge {
+      font-size: 10px; background: rgba(99,102,241,0.2);
+      color: var(--accent); padding: 1px 6px; border-radius: 99px;
+      position: relative; z-index: 1;
+    }
+
+    .sidebar-divider { height: 1px; background: var(--border); margin: 8px 12px; }
+
+    /* Kill button */
+    #kill-btn {
+      margin: 8px 12px; padding: 8px 12px;
+      border-radius: var(--radius-sm); border: 1px solid rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.08); color: #fca5a5; cursor: pointer;
+      font-size: 12px; font-weight: 500; font-family: inherit;
+      display: none; align-items: center; gap: 8px;
+      transition: var(--transition);
+    }
+    #kill-btn:hover { background: rgba(239,68,68,0.18); border-color: var(--red); }
+    #kill-btn.visible { display: flex; }
+
+    /* Run info card */
+    .run-info-card {
+      margin: 12px; padding: 12px; border-radius: var(--radius-sm);
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 11px; line-height: 1.8;
+    }
+    .run-info-card .ri-label { color: var(--text-muted); }
+    .run-info-card .ri-val   { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+    /* Main area */
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 0; border-bottom: 1px solid var(--border);
+      background: var(--bg-1); flex-shrink: 0; padding: 0 20px;
+    }
+    .tab-btn {
+      padding: 14px 20px; font-size: 13px; font-weight: 500;
+      color: var(--text-muted); background: transparent; border: none;
+      cursor: pointer; font-family: inherit; position: relative;
+      transition: var(--transition); border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover  { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* Tab panels */
+    .tab-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .tab-panel.active { display: flex; }
+
+    /* ── Terminal panel ──────────────────────────────────────────────────── */
+    #panel-terminal {
+      background: #070b14; position: relative;
+    }
+    #terminal {
+      flex: 1; overflow-y: auto; padding: 20px 24px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 12.5px; line-height: 1.7;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    #terminal-placeholder {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      color: var(--text-muted); pointer-events: none;
+    }
+    #terminal-placeholder .ph-icon { font-size: 40px; opacity: 0.3; }
+    #terminal-placeholder .ph-text { font-size: 13px; opacity: 0.5; }
+    .terminal-toolbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 16px; background: rgba(0,0,0,0.4);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .term-dot-r { background: #ff5f57; }
+    .term-dot-y { background: #febc2e; }
+    .term-dot-g { background: #28c840; }
+    .term-title { flex: 1; text-align: center; font-size: 11px; color: var(--text-muted); }
+    #clear-btn {
+      font-size: 11px; color: var(--text-muted); background: transparent;
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 2px 10px; cursor: pointer; font-family: inherit;
+      transition: var(--transition);
+    }
+    #clear-btn:hover { color: var(--text); border-color: var(--border-h); }
+
+    /* ANSI color classes */
+    .ansi-30{color:#666}.ansi-31{color:#ff5555}.ansi-32{color:#55ff55}
+    .ansi-33{color:#ffff55}.ansi-34{color:#5555ff}.ansi-35{color:#ff55ff}
+    .ansi-36{color:#55ffff}.ansi-37{color:#ffffff}.ansi-90{color:#888}
+    .ansi-91{color:#ff6e6e}.ansi-92{color:#69ff47}.ansi-93{color:#ffffa5}
+    .ansi-94{color:#85d3ff}.ansi-95{color:#ff92df}.ansi-96{color:#a4ffff}
+    .ansi-1{font-weight:700}.ansi-3{font-style:italic}.ansi-4{text-decoration:underline}
+
+    /* ── Reports panel ───────────────────────────────────────────────────── */
+    #panel-reports { overflow-y: auto; }
+    .reports-grid {
+      padding: 20px 24px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .reports-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px 0; margin-top: 20px;
+    }
+    .reports-header h2 { font-size: 15px; font-weight: 600; }
+    #refresh-runs {
+      font-size: 12px; color: var(--text-muted); background: transparent;
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 4px 12px; cursor: pointer; font-family: inherit;
+      transition: var(--transition); display: flex; align-items: center; gap: 6px;
+    }
+    #refresh-runs:hover { color: var(--text); border-color: var(--border-h); }
+
+    .run-card {
+      background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: flex; align-items: center; gap: 16px;
+      transition: var(--transition);
+    }
+    .run-card:hover { border-color: var(--border-h); background: var(--bg-3); }
+    .run-card-id {
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      color: var(--accent); flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .run-card-meta {
+      font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; flex-shrink: 0;
+    }
+    .run-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500;
+    }
+    .run-badge-json { background: rgba(6,182,212,0.15);  color: var(--cyan); }
+    .run-badge-pdf  { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .run-badge-html { background: rgba(34,197,94,0.1);   color: #86efac; }
+    .run-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .report-action-btn {
+      font-size: 11px; padding: 5px 12px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-dim); cursor: pointer; font-family: inherit;
+      transition: var(--transition); white-space: nowrap;
+    }
+    .report-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .report-action-btn.primary {
+      background: rgba(99,102,241,0.15); border-color: var(--accent); color: #c7d2fe;
+    }
+    .report-action-btn.primary:hover { background: rgba(99,102,241,0.25); }
+    .report-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 60px 24px; gap: 12px;
+      color: var(--text-muted); text-align: center;
+    }
+    .empty-state .es-icon { font-size: 40px; opacity: 0.3; }
+    .empty-state .es-title { font-size: 14px; font-weight: 600; opacity: 0.6; }
+    .empty-state .es-sub   { font-size: 12px; opacity: 0.4; max-width: 300px; }
+
+    /* ── PDF Viewer panel ────────────────────────────────────────────────── */
+    #panel-viewer { background: var(--bg); }
+    .viewer-toolbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 20px; background: var(--bg-1);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .viewer-toolbar-info {
+      flex: 1; font-size: 12px; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #viewer-download {
+      font-size: 12px; padding: 6px 14px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-dim); cursor: pointer; font-family: inherit;
+      text-decoration: none; display: flex; align-items: center; gap: 6px;
+      transition: var(--transition);
+    }
+    #viewer-download:hover { border-color: var(--accent); color: var(--accent); }
+    #pdf-frame {
+      flex: 1; border: none; background: #525659;
+    }
+    .viewer-empty {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      color: var(--text-muted);
+    }
+    .viewer-empty .ve-icon  { font-size: 48px; opacity: 0.2; }
+    .viewer-empty .ve-title { font-size: 14px; opacity: 0.5; }
+    .viewer-empty .ve-sub   { font-size: 12px; opacity: 0.35; }
+
+    /* ── Notification toast ──────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 18px;
+      font-size: 13px; max-width: 360px; display: none;
+      align-items: center; gap: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideIn 0.25s ease;
+    }
+    #toast.visible { display: flex; }
+    #toast.success { border-color: rgba(34,197,94,0.4);  color: #86efac; }
+    #toast.error   { border-color: rgba(239,68,68,0.4);  color: #fca5a5; }
+    #toast.info    { border-color: rgba(99,102,241,0.4); color: #c7d2fe; }
+    @keyframes slideIn {
+      from { opacity:0; transform: translateY(12px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* ── Loading skeleton ────────────────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px; height: 64px;
+    }
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    /* ── Entrance animation ──────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(10px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.35s ease forwards; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-title">IndiaMart Perf Suite</div>
+        <div class="logo-sub">Performance Testing Dashboard</div>
+      </div>
+    </div>
+    <div class="header-spacer"></div>
+    <div id="status-pill" class="idle">
+      <div id="status-dot"></div>
+      <span id="status-text">Idle</span>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- Sidebar -->
+    <aside>
+      <div class="sidebar-section">
+        <div class="sidebar-label">End-to-End Tests</div>
+        <button class="action-btn" id="btn-e2e" onclick="runAction('e2e')">
+          <span class="action-icon">🚀</span>
+          <span class="action-label">Run E2E</span>
+          <span class="action-phase-badge">Phase 1</span>
+        </button>
+        <button class="action-btn" id="btn-e2e-phase2" onclick="runAction('e2e:phase2')">
+          <span class="action-icon">🔬</span>
+          <span class="action-label">Run E2E</span>
+          <span class="action-phase-badge">Phase 2</span>
+        </button>
+        <button class="action-btn" id="btn-e2e-phase3" onclick="runAction('e2e:phase3')">
+          <span class="action-icon">🤖</span>
+          <span class="action-label">Run E2E</span>
+          <span class="action-phase-badge">Phase 3</span>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Reports</div>
+        <button class="action-btn" id="btn-report-pdf" onclick="runAction('report:pdf')">
+          <span class="action-icon">📄</span>
+          <span class="action-label">Generate PDF Report</span>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Utilities</div>
+        <button class="action-btn" id="btn-capture-baselines" onclick="runAction('capture-baselines')">
+          <span class="action-icon">📸</span>
+          <span class="action-label">Capture Baselines</span>
+        </button>
+        <button class="action-btn" id="btn-sitemap-preview" onclick="runAction('sitemap:preview')">
+          <span class="action-icon">🗺</span>
+          <span class="action-label">Sitemap Preview</span>
+        </button>
+        <button class="action-btn" id="btn-test" onclick="runAction('test')">
+          <span class="action-icon">🧪</span>
+          <span class="action-label">Unit Tests</span>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <button id="kill-btn" onclick="killJob()">
+        <span>⏹</span> Stop Running Job
+      </button>
+
+      <div class="run-info-card" id="run-info-card" style="display:none">
+        <div><span class="ri-label">Action: </span><span class="ri-val" id="ri-action">—</span></div>
+        <div><span class="ri-label">Started: </span><span class="ri-val" id="ri-started">—</span></div>
+        <div><span class="ri-label">Duration: </span><span class="ri-val" id="ri-duration">—</span></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-terminal" onclick="setTab('terminal')">🖥 Terminal</button>
+        <button class="tab-btn" id="tab-reports"  onclick="setTab('reports')">📁 Reports</button>
+        <button class="tab-btn" id="tab-viewer"   onclick="setTab('viewer')">📄 PDF Viewer</button>
+      </div>
+
+      <!-- Terminal panel -->
+      <div class="tab-panel active" id="panel-terminal">
+        <div class="terminal-toolbar">
+          <div class="term-dot term-dot-r"></div>
+          <div class="term-dot term-dot-y"></div>
+          <div class="term-dot term-dot-g"></div>
+          <div class="term-title" id="term-title">No job running</div>
+          <button id="clear-btn" onclick="clearTerminal()">Clear</button>
+        </div>
+        <div id="terminal">
+          <div id="terminal-placeholder">
+            <div class="ph-icon">⚡</div>
+            <div class="ph-text">Select an action from the sidebar to start</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports panel -->
+      <div class="tab-panel" id="panel-reports">
+        <div class="reports-header">
+          <h2>Test Runs &amp; Reports</h2>
+          <button id="refresh-runs" onclick="loadRuns()">↺ Refresh</button>
+        </div>
+        <div class="reports-grid" id="runs-list">
+          <div class="skeleton"></div>
+          <div class="skeleton" style="height:48px;opacity:0.6"></div>
+          <div class="skeleton" style="height:48px;opacity:0.3"></div>
+        </div>
+      </div>
+
+      <!-- PDF Viewer panel -->
+      <div class="tab-panel" id="panel-viewer">
+        <div class="viewer-toolbar">
+          <span>📄</span>
+          <div class="viewer-toolbar-info" id="viewer-path">No file selected</div>
+          <a id="viewer-download" href="#" download style="display:none">⬇ Download</a>
+        </div>
+        <div class="viewer-empty" id="viewer-empty">
+          <div class="ve-icon">📋</div>
+          <div class="ve-title">No report selected</div>
+          <div class="ve-sub">Go to Reports tab and click "View PDF" or "View HTML" to open a report here.</div>
+        </div>
+        <iframe id="pdf-frame" style="display:none"></iframe>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const API = 'http://localhost:4000/api';
+let currentTab    = 'terminal';
+let sseSource     = null;
+let jobRunning    = false;
+let jobStartedAt  = null;
+let durationTimer = null;
+let currentAction = null;
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function setTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  document.getElementById(`panel-${name}`).classList.add('active');
+  currentTab = name;
+  if (name === 'reports') loadRuns();
+}
+
+// ── ANSI → HTML ───────────────────────────────────────────────────────────────
+function ansiToHtml(text) {
+  // Escape HTML first
+  text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const sgr = {
+    '0':'', '1':'font-weight:700','3':'font-style:italic','4':'text-decoration:underline',
+    '30':'color:#666','31':'color:#ff5555','32':'color:#55ff55','33':'color:#ffff55',
+    '34':'color:#5555ff','35':'color:#ff55ff','36':'color:#55ffff','37':'color:#fff',
+    '90':'color:#888','91':'color:#ff6e6e','92':'color:#69ff47','93':'color:#ffffa5',
+    '94':'color:#85d3ff','95':'color:#ff92df','96':'color:#a4ffff','97':'color:#fff',
+  };
+
+  // Replace ESC[...m sequences
+  text = text.replace(/\x1b\[([0-9;]*)m/g, (_, codes) => {
+    if (!codes || codes === '0') return '</span><span>';
+    const parts = codes.split(';');
+    const styles = parts.map(c => sgr[c] || '').filter(Boolean).join(';');
+    return styles ? `</span><span style="${styles}">` : '';
+  });
+
+  // Strip remaining escape sequences
+  text = text.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '');
+  text = text.replace(/\x1b\][^\x07\x1b]*[\x07\x1b\\]/g, '');
+  text = text.replace(/\x1b[^[]/g, '');
+
+  return `<span>${text}</span>`;
+}
+
+// ── Terminal output ───────────────────────────────────────────────────────────
+const termEl    = document.getElementById('terminal');
+const termPH    = document.getElementById('terminal-placeholder');
+const termTitle = document.getElementById('term-title');
+let   termHasContent = false;
+
+function appendToTerminal(text) {
+  if (!termHasContent) {
+    termPH.style.display = 'none';
+    termHasContent = true;
+  }
+  const span = document.createElement('span');
+  span.innerHTML = ansiToHtml(text);
+  termEl.appendChild(span);
+  // Auto-scroll
+  termEl.scrollTop = termEl.scrollHeight;
+}
+
+function clearTerminal() {
+  termEl.innerHTML = '';
+  termEl.appendChild(termPH);
+  termPH.style.display = '';
+  termHasContent = false;
+}
+
+// ── SSE log streaming ─────────────────────────────────────────────────────────
+function connectSSE() {
+  if (sseSource) { sseSource.close(); sseSource = null; }
+
+  sseSource = new EventSource(`${API}/log`);
+
+  sseSource.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.text !== undefined) {
+      appendToTerminal(data.text);
+    }
+    if (data.done) {
+      sseSource.close(); sseSource = null;
+      setJobState(false, data.code);
+    }
+  };
+
+  sseSource.onerror = () => {
+    if (sseSource) sseSource.close();
+    sseSource = null;
+  };
+}
+
+// ── Job state management ──────────────────────────────────────────────────────
+function setJobState(running, exitCode) {
+  jobRunning = running;
+  const pill = document.getElementById('status-pill');
+  const dot  = document.getElementById('status-dot');
+  const txt  = document.getElementById('status-text');
+  const kill = document.getElementById('kill-btn');
+  const info = document.getElementById('run-info-card');
+
+  // Disable / enable all action buttons
+  document.querySelectorAll('.action-btn').forEach(b => b.disabled = running);
+
+  if (running) {
+    pill.className = 'running';
+    txt.textContent = `Running: ${currentAction}`;
+    kill.classList.add('visible');
+    info.style.display = 'block';
+    termTitle.textContent = `npm run ${currentAction}`;
+    startDurationTimer();
+    // Switch to terminal tab automatically
+    setTab('terminal');
+  } else {
+    pill.className = exitCode === 0 ? 'idle' : 'error';
+    txt.textContent = exitCode === 0 ? 'Completed ✔' : `Failed (code ${exitCode})`;
+    kill.classList.remove('visible');
+    stopDurationTimer();
+
+    if (exitCode === 0) {
+      showToast('Job completed successfully!', 'success');
+      // Reload runs in case new reports were generated
+      if (currentAction === 'report:pdf' || currentAction === 'e2e' || currentAction === 'e2e:phase2' || currentAction === 'e2e:phase3') {
+        setTimeout(loadRuns, 1500);
+      }
+    } else if (exitCode !== null) {
+      showToast(`Job exited with code ${exitCode}`, 'error');
+    }
+  }
+}
+
+function startDurationTimer() {
+  jobStartedAt = Date.now();
+  stopDurationTimer();
+  durationTimer = setInterval(() => {
+    const secs = Math.floor((Date.now() - jobStartedAt) / 1000);
+    const m = Math.floor(secs / 60).toString().padStart(2,'0');
+    const s = (secs % 60).toString().padStart(2,'0');
+    document.getElementById('ri-duration').textContent = `${m}:${s}`;
+  }, 500);
+}
+
+function stopDurationTimer() {
+  if (durationTimer) { clearInterval(durationTimer); durationTimer = null; }
+}
+
+// ── Run action ────────────────────────────────────────────────────────────────
+async function runAction(action, runId) {
+  if (jobRunning) { showToast('A job is already running!', 'error'); return; }
+
+  // Highlight active button
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-${action.replace(/:/g, '-')}`);
+  if (btn) btn.classList.add('active');
+
+  currentAction = action;
+  document.getElementById('ri-action').textContent  = action;
+  document.getElementById('ri-started').textContent = new Date().toLocaleTimeString();
+
+  clearTerminal();
+  setJobState(true, null);
+
+  try {
+    const resp = await fetch(`${API}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, runId }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      showToast(err.error || 'Failed to start job', 'error');
+      setJobState(false, 1);
+      return;
+    }
+    // Connect SSE after a tiny delay so the process is spawned
+    setTimeout(connectSSE, 100);
+  } catch(err) {
+    showToast('Could not reach server', 'error');
+    setJobState(false, 1);
+  }
+}
+
+// ── Kill job ──────────────────────────────────────────────────────────────────
+async function killJob() {
+  try {
+    await fetch(`${API}/kill`, { method: 'POST' });
+    showToast('Stop signal sent', 'info');
+  } catch { showToast('Could not reach server', 'error'); }
+}
+
+// ── Load runs list ────────────────────────────────────────────────────────────
+async function loadRuns() {
+  const list = document.getElementById('runs-list');
+  list.innerHTML = '<div class="skeleton"></div><div class="skeleton" style="height:48px;opacity:0.6"></div>';
+
+  try {
+    const resp = await fetch(`${API}/runs`);
+    const runs = await resp.json();
+
+    if (!runs.length) {
+      list.innerHTML = `<div class="empty-state">
+        <div class="es-icon">📭</div>
+        <div class="es-title">No runs yet</div>
+        <div class="es-sub">Run an E2E test or generate a PDF report to see results here.</div>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = runs.map((run, i) => `
+      <div class="run-card fade-up" style="animation-delay:${i * 40}ms">
+        <div>
+          <div class="run-card-id">${run.id}</div>
+          <div class="run-card-meta" style="margin-top:4px">
+            <span>${run.mtime ? new Date(run.mtime).toLocaleString() : '—'}</span>
+            ${run.jsonCount ? `<span class="run-badge run-badge-json">${run.jsonCount} JSON</span>` : ''}
+            ${run.hasPdf   ? `<span class="run-badge run-badge-pdf">PDF</span>`  : ''}
+            ${run.hasHtml  ? `<span class="run-badge run-badge-html">HTML</span>` : ''}
+          </div>
+        </div>
+        <div class="run-card-actions">
+          ${run.hasPdf
+            ? `<button class="report-action-btn primary" onclick="viewFile('reports/${run.id}/performance-report.pdf', 'PDF')">👁 View PDF</button>`
+            : `<button class="report-action-btn" onclick="runAction('report:pdf','${run.id}')" title="Generate PDF for this run">📄 Generate PDF</button>`
+          }
+          ${run.hasHtml
+            ? `<button class="report-action-btn" onclick="viewFile('reports/${run.id}/performance-report.html', 'HTML')">🌐 View HTML</button>`
+            : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(err) {
+    list.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">Failed to load runs</div><div class="es-sub">${err.message}</div></div>`;
+  }
+}
+
+// ── Open file in viewer ───────────────────────────────────────────────────────
+function viewFile(relativePath, type) {
+  const url = `${API}/file/${relativePath}`;
+  const frame   = document.getElementById('pdf-frame');
+  const empty   = document.getElementById('viewer-empty');
+  const pathEl  = document.getElementById('viewer-path');
+  const dlBtn   = document.getElementById('viewer-download');
+
+  if (type === 'HTML') {
+    // Open HTML reports in a new tab (iframes may block inline HTML serving)
+    window.open(url, '_blank');
+    showToast('Opening HTML report in new tab', 'info');
+    return;
+  }
+
+  pathEl.textContent = relativePath;
+  frame.src = url;
+  frame.style.display = 'block';
+  empty.style.display = 'none';
+  dlBtn.href = url;
+  dlBtn.download = relativePath.split('/').pop();
+  dlBtn.style.display = 'flex';
+
+  setTab('viewer');
+  showToast('Loading PDF…', 'info');
+}
+
+// ── Toast notifications ───────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  const icons = { success: '✔', error: '✘', info: 'ℹ' };
+  toast.innerHTML = `<span>${icons[type] || 'ℹ'}</span> ${msg}`;
+  toast.className = `visible ${type}`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.className = ''; }, 3500);
+}
+
+// ── Periodic status polling (for page reload recovery) ────────────────────────
+async function pollStatus() {
+  try {
+    const resp = await fetch(`${API}/status`);
+    const s = await resp.json();
+    if (s.running && !jobRunning) {
+      // Server has a running job we're not tracking — reconnect
+      currentAction = s.action;
+      jobStartedAt  = new Date(s.startedAt).getTime();
+      setJobState(true, null);
+      connectSSE();
+    }
+  } catch {}
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadRuns();
+  pollStatus();
+  setInterval(pollStatus, 10000);
+});
+</script>
+</body>
+</html>
